@@ -33,9 +33,11 @@ struct TravelDrawer: View {
             }
 
             Tab("Import", systemImage: "photo.on.rectangle.angled", value: DrawerPage.photoImport) {
-                VStack(spacing: 10) {
-                    drawerHeader
-                    PhotoImportView()
+                NavigationStack {
+                    VStack(spacing: 10) {
+                        drawerHeader
+                        PhotoImportView()
+                    }
                 }
             }
         }

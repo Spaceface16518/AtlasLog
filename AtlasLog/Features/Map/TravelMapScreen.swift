@@ -15,7 +15,7 @@ struct TravelMapScreen: View {
     @State private var regionNodes: [RegionNode] = []
     @State private var geometries: [RegionGeometry] = []
     @State private var showDrawer = false
-    @State private var drawerDetent: PresentationDetent = .height(104)
+    @State private var drawerDetent: PresentationDetent = .medium
     @State private var editingPlace: PlaceRecord?
     @State private var showSettings = false
     @State private var resourceMessage: String?
@@ -66,19 +66,16 @@ struct TravelMapScreen: View {
         .ignoresSafeArea()
         .overlay(alignment: .top) { mapToolbar.padding(.top, 10).padding(.horizontal) }
         .sheet(isPresented: $showDrawer) {
-            NavigationStack {
-                TravelDrawer(navigation: navigation, nodes: regionNodes, mapCenter: mapCenter)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Settings", systemImage: "gearshape") { showSettings = true } } }
-            }
-            .presentationDetents([.height(104), .medium, .large], selection: $drawerDetent)
-            .presentationDragIndicator(.visible)
-            .presentationBackground(.regularMaterial)
-            .presentationCornerRadius(24)
-            .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-            .interactiveDismissDisabled()
+            TravelDrawer(navigation: navigation, nodes: regionNodes, mapCenter: mapCenter)
+                .sheet(isPresented: $showSettings) { SettingsView() }
+                .presentationDetents([.medium, .large], selection: $drawerDetent)
+                .presentationDragIndicator(.visible)
+                .presentationBackground(.regularMaterial)
+                .presentationCornerRadius(24)
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                .interactiveDismissDisabled()
         }
         .sheet(item: $editingPlace) { PlaceEditorView(place: $0, seed: nil) }
-        .sheet(isPresented: $showSettings) { SettingsView() }
         .alert("Bundled data unavailable", isPresented: .init(get: { resourceMessage != nil }, set: { if !$0 { resourceMessage = nil } })) {
             Button("OK", role: .cancel) { resourceMessage = nil }
         } message: { Text(resourceMessage ?? "") }
@@ -95,16 +92,27 @@ struct TravelMapScreen: View {
     }
 
     private var mapToolbar: some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .top, spacing: 10) {
             MapLevelMenu(level: $navigation.level)
             Spacer()
-            Button {
-                mapStyle = mapStyle == .standard ? .satellite : .standard
-            } label: {
-                Image(systemName: mapStyle == .standard ? "globe.americas.fill" : "map.fill")
-                    .frame(width: 36, height: 36).background(.regularMaterial, in: Circle())
+            VStack(spacing: 10) {
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape")
+                        .frame(width: 36, height: 36)
+                        .background(.regularMaterial, in: Circle())
+                }
+                .accessibilityLabel("Settings")
+                .accessibilityIdentifier("map-settings")
+
+                Button {
+                    mapStyle = mapStyle == .standard ? .satellite : .standard
+                } label: {
+                    Image(systemName: mapStyle == .standard ? "globe.americas.fill" : "map.fill")
+                        .frame(width: 36, height: 36)
+                        .background(.regularMaterial, in: Circle())
+                }
+                .accessibilityLabel(mapStyle == .standard ? "Switch to satellite map" : "Switch to standard map")
             }
-            .accessibilityLabel(mapStyle == .standard ? "Switch to satellite map" : "Switch to standard map")
         }
     }
 
