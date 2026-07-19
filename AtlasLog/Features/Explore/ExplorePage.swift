@@ -11,7 +11,6 @@ struct ExplorePage: View {
     @State private var editingPlace: PlaceRecord?
     @State private var editingRegion: RegionNode?
     @State private var showImport = false
-    @State private var showSettings = false
 
     let regionNodes: [RegionNode]
     let mapCenter: CoordinateValue
@@ -51,8 +50,6 @@ struct ExplorePage: View {
         .sheet(item: $editingPlace) { PlaceEditorView(place: $0, seed: nil) { saved in focus(saved) } }
         .sheet(item: $editingRegion) { AreaDetailView(node: $0) }
         .sheet(isPresented: $showImport) { PhotoImportView() }
-        .sheet(isPresented: $showSettings) { SettingsView() }
-        .toolbar { Button("Settings", systemImage: "gearshape") { showSettings = true } }
     }
 
     @ViewBuilder private var placeList: some View {

@@ -11,6 +11,7 @@ final class AtlasLogUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-reset"]
         app.launch()
         XCTAssertTrue(app.staticTexts["Explore"].waitForExistence(timeout: 8))
+        XCTAssertEqual(app.buttons.matching(identifier: "Settings").count, 1)
 
         let search = app.textFields["place-search"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -46,5 +47,6 @@ final class AtlasLogUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         XCTAssertTrue(app.staticTexts["Explore"].waitForExistence(timeout: 8))
+        XCTAssertEqual(app.buttons.matching(identifier: "Settings").count, 1)
     }
 }
