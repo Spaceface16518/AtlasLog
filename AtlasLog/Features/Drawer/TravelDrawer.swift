@@ -31,6 +31,13 @@ struct TravelDrawer: View {
                     PassportPage(navigation: navigation, nodes: nodes)
                 }
             }
+
+            Tab("Import", systemImage: "photo.on.rectangle.angled", value: DrawerPage.photoImport) {
+                VStack(spacing: 10) {
+                    drawerHeader
+                    PhotoImportView()
+                }
+            }
         }
         .padding(.top, 6)
     }

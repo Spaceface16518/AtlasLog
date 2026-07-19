@@ -10,7 +10,6 @@ struct ExplorePage: View {
     @State private var newSeed: PlaceSeed?
     @State private var editingPlace: PlaceRecord?
     @State private var editingRegion: RegionNode?
-    @State private var showImport = false
 
     let regionNodes: [RegionNode]
     let mapCenter: CoordinateValue
@@ -32,7 +31,6 @@ struct ExplorePage: View {
                     }
                     .pickerStyle(.menu)
                     Spacer()
-                    Button { showImport = true } label: { Label("Photos", systemImage: "photo.on.rectangle.angled") }
                     Button { newSeed = manualSeed } label: { Label("Add", systemImage: "plus") }
                         .accessibilityIdentifier("add-place")
                 }
@@ -49,7 +47,6 @@ struct ExplorePage: View {
         .sheet(item: $newSeed) { PlaceEditorView(place: nil, seed: $0) { saved in focus(saved) } }
         .sheet(item: $editingPlace) { PlaceEditorView(place: $0, seed: nil) { saved in focus(saved) } }
         .sheet(item: $editingRegion) { AreaDetailView(node: $0) }
-        .sheet(isPresented: $showImport) { PhotoImportView() }
     }
 
     @ViewBuilder private var placeList: some View {

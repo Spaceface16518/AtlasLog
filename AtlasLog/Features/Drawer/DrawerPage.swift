@@ -3,6 +3,7 @@ import Foundation
 enum DrawerPage: String, CaseIterable, Identifiable {
     case explore = "Explore"
     case passport = "Passport"
+    case photoImport = "Import"
     var id: String { rawValue }
 }
 

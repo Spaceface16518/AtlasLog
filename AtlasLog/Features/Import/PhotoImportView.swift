@@ -4,7 +4,6 @@ import SwiftUI
 import OSLog
 
 struct PhotoImportView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppDependencies.self) private var dependencies
     @Query private var importedAssets: [ImportedAssetRecord]
@@ -19,28 +18,25 @@ struct PhotoImportView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if isProcessing { processingView }
-                else if candidates.isEmpty { selectionView }
-                else { reviewView }
-            }
-            .navigationTitle("Import photos")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Close") { cancel(); dismiss() } }
-                if !candidates.isEmpty {
-                    ToolbarItem(placement: .confirmationAction) { Button("Import", action: save).disabled(!candidates.contains(where: \.include)) }
+        Group {
+            if isProcessing { processingView }
+            else if candidates.isEmpty { selectionView }
+            else { reviewView }
+        }
+        .toolbar {
+            if !candidates.isEmpty {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Import", action: save).disabled(!candidates.contains(where: \.include))
                 }
             }
-            .alert("Photo import", isPresented: .init(get: { resultMessage != nil }, set: { if !$0 { resultMessage = nil } })) {
-                Button("Done") { dismiss() }
-            } message: { Text(resultMessage ?? "") }
-            .alert("Couldn’t import", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
-                Button("OK", role: .cancel) { errorMessage = nil }
-            } message: { Text(errorMessage ?? "") }
-            .onChange(of: selections) { _, items in if !items.isEmpty { process(items) } }
         }
+        .alert("Photo import", isPresented: .init(get: { resultMessage != nil }, set: { if !$0 { resultMessage = nil } })) {
+            Button("Done", action: reset)
+        } message: { Text(resultMessage ?? "") }
+        .alert("Couldn’t import", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK", role: .cancel) { errorMessage = nil }
+        } message: { Text(errorMessage ?? "") }
+        .onChange(of: selections) { _, items in if !items.isEmpty { process(items) } }
     }
 
     private var selectionView: some View {
@@ -146,6 +142,15 @@ struct PhotoImportView: View {
     }
 
     private func cancel() { processorTask?.cancel(); processorTask = nil; isProcessing = false }
+
+    private func reset() {
+        resultMessage = nil
+        selections = []
+        candidates = []
+        skipped = 0
+        failed = 0
+        duplicateCount = 0
+    }
 }
 
 struct ImportCandidateRow: View {
