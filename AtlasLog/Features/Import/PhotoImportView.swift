@@ -112,14 +112,16 @@ struct PhotoImportView: View {
     }
 
     private func save() {
-        var importedCities = 0
+        var importedVisits = 0
         do {
             let service = TravelRecordService(context: context)
             for candidate in candidates where candidate.include {
                 var status = StatusDraft(); status.setVisited(true); status.setMeaningful(candidate.isMeaningfulVisit)
-                _ = try service.upsert(canonicalKey: candidate.canonicalKey, name: candidate.proposedName,
+                _ = try service.addVisit(canonicalKey: candidate.canonicalKey, name: candidate.proposedName,
                     coordinate: candidate.coordinate, countryCode: candidate.countryCode, countryName: candidate.proposedCountry,
-                    source: .photoImport, status: status, firstVisitedAt: candidate.earliestDate, lastVisitedAt: candidate.latestDate)
+                    source: .photoImport, status: status,
+                    startDate: candidate.earliestDate ?? candidate.latestDate ?? .now,
+                    endDate: candidate.latestDate)
                 for identifier in candidate.assetIdentifiers where !importedAssets.contains(where: { $0.assetIdentifier == identifier }) {
                     context.insert(ImportedAssetRecord(assetIdentifier: identifier, matchedPlaceCanonicalKey: candidate.canonicalKey))
                 }
@@ -132,9 +134,9 @@ struct PhotoImportView: View {
                     try service.setManualArea(node, status: status)
                 }
                 try context.save()
-                importedCities += 1
+                importedVisits += 1
             }
-            resultMessage = "Imported \(importedCities) places. \(skipped) photos had no location, \(duplicateCount) were duplicates, and \(failed) failed."
+            resultMessage = "Imported \(importedVisits) visits. \(skipped) photos had no location, \(duplicateCount) were duplicates, and \(failed) failed."
         } catch {
             AppLogger.photoImport.error("Save failed: \(error.localizedDescription, privacy: .public)")
             errorMessage = "Some places may have been imported, but the batch could not be completed."

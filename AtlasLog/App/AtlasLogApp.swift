@@ -8,11 +8,12 @@ struct AtlasLogApp: App {
 
     init() {
         do {
-            let schema = Schema(SchemaV1.models)
+            let schema = Schema(SchemaV2.models)
             let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             container = try ModelContainer(for: schema, migrationPlan: AtlasMigrationPlan.self, configurations: [configuration])
             if ProcessInfo.processInfo.arguments.contains("--ui-testing-reset") {
                 let context = ModelContext(container)
+                try context.delete(model: VisitRecord.self)
                 try context.delete(model: PlaceRecord.self)
                 try context.delete(model: AreaStatus.self)
                 try context.delete(model: ImportedAssetRecord.self)

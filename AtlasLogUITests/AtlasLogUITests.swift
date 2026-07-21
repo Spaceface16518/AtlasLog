@@ -19,10 +19,8 @@ final class AtlasLogUITests: XCTestCase {
         search.typeText("Dallas")
         XCTAssertTrue(app.staticTexts["Dallas"].waitForExistence(timeout: 5))
         app.staticTexts["Dallas"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Add visit"].waitForExistence(timeout: 5))
 
-        let visited = app.switches["visited-toggle"]
-        XCTAssertTrue(visited.waitForExistence(timeout: 5))
-        visited.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         app.swipeUp()
         let meaningful = app.switches["meaningful-toggle"]
         XCTAssertTrue(meaningful.waitForExistence(timeout: 5))

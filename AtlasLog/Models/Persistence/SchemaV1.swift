@@ -120,7 +120,3 @@ enum SchemaV1: VersionedSchema {
         }
     }
 }
-
-typealias PlaceRecord = SchemaV1.PlaceRecord
-typealias AreaStatus = SchemaV1.AreaStatus
-typealias ImportedAssetRecord = SchemaV1.ImportedAssetRecord

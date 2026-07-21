@@ -37,8 +37,8 @@ struct ExplorePage: View {
                     }
                     .pickerStyle(.menu)
                     Spacer()
-                    Button { newSeed = manualSeed } label: { Label("Add", systemImage: "plus") }
-                        .accessibilityIdentifier("add-place")
+                    Button { newSeed = manualSeed } label: { Label("Add visit", systemImage: "plus") }
+                        .accessibilityIdentifier("add-visit")
                 }
                 .font(.subheadline.weight(.medium))
 
@@ -58,11 +58,11 @@ struct ExplorePage: View {
     @ViewBuilder private var placeList: some View {
         let filtered = places.filter(matchesFilter)
         if filtered.isEmpty {
-            ContentUnavailableView("No places yet", systemImage: "mappin.slash",
-                                   description: Text("Search a bundled city, use Apple Maps, or add a point manually."))
+            ContentUnavailableView("No visits yet", systemImage: "mappin.slash",
+                                   description: Text("Search for a city or add a visit manually."))
                 .frame(minHeight: 180)
         } else {
-            sectionHeader("Tracked places", count: filtered.count)
+            sectionHeader("Cities", count: filtered.count)
             ForEach(filtered) { place in
                 Button { editingPlace = place; focus(place) } label: {
                     PlaceRow(title: place.name, subtitle: place.countryName, symbol: statusSymbol(place))
@@ -111,7 +111,7 @@ struct ExplorePage: View {
         return "mappin.circle"
     }
     private var manualSeed: PlaceSeed {
-        PlaceSeed(canonicalKey: nil, mapItemIdentifier: nil, kind: .customPoint, name: "",
+        PlaceSeed(canonicalKey: nil, mapItemIdentifier: nil, kind: .city, name: "",
                   subtitle: nil, coordinate: mapCenter, countryCode: nil, countryName: nil,
                   administrativeArea: nil, source: .manual)
     }

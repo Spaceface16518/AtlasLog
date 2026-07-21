@@ -8,7 +8,7 @@ struct PlaceSearchView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            TextField("Search cities and landmarks", text: $state.query)
+            TextField("Search for a city to visit", text: $state.query)
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.words)
                 .submitLabel(.search)

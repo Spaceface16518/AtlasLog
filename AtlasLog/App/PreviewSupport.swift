@@ -32,7 +32,7 @@ enum PreviewSupport {
 
     static func container(populated: Bool = false) -> ModelContainer {
         do {
-            let schema = Schema(SchemaV1.models)
+            let schema = Schema(SchemaV2.models)
             let container = try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
             if populated {
                 let context = ModelContext(container)

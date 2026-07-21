@@ -4,7 +4,7 @@ import SwiftData
 
 @MainActor
 func makeTestContainer() throws -> ModelContainer {
-    let schema = Schema(SchemaV1.models)
+    let schema = Schema(SchemaV2.models)
     return try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
 }
 

@@ -7,8 +7,13 @@ struct TravelRecordService {
 
     func apply(_ draft: StatusDraft, to place: PlaceRecord, now: Date = .now) throws {
         var normalized = draft
-        if normalized.isMeaningfulVisit || normalized.isWantToReturn { normalized.setVisited(true) }
-        if normalized.isVisited { normalized.isWantToVisit = false }
+        normalized.isVisited = !place.visits.isEmpty
+        if normalized.isVisited {
+            normalized.isWantToVisit = false
+        } else {
+            normalized.isMeaningfulVisit = false
+            normalized.isWantToReturn = false
+        }
         place.isVisited = normalized.isVisited
         place.isWantToVisit = normalized.isWantToVisit
         place.isMeaningfulVisit = normalized.isMeaningfulVisit
@@ -19,11 +24,25 @@ struct TravelRecordService {
     }
 
     @discardableResult
-    func upsert(
+    func addVisit(
         canonicalKey: String, name: String, kind: PlaceKind = .city,
         coordinate: CoordinateValue, countryCode: String? = nil, countryName: String? = nil,
         administrativeArea: String? = nil, source: VisitSource, status: StatusDraft,
-        firstVisitedAt: Date? = nil, lastVisitedAt: Date? = nil
+        startDate: Date, endDate: Date? = nil
+    ) throws -> PlaceRecord {
+        let place = try upsertPlace(canonicalKey: canonicalKey, name: name, kind: kind,
+                                    coordinate: coordinate, countryCode: countryCode,
+                                    countryName: countryName, administrativeArea: administrativeArea,
+                                    source: source, status: status)
+        try addVisit(to: place, startDate: startDate, endDate: endDate, source: source, status: status)
+        return place
+    }
+
+    @discardableResult
+    func upsertPlace(
+        canonicalKey: String, name: String, kind: PlaceKind = .city,
+        coordinate: CoordinateValue, countryCode: String? = nil, countryName: String? = nil,
+        administrativeArea: String? = nil, source: VisitSource, status: StatusDraft = .init()
     ) throws -> PlaceRecord {
         let key = canonicalKey
         let descriptor = FetchDescriptor<PlaceRecord>(predicate: #Predicate { $0.canonicalKey == key })
@@ -36,19 +55,43 @@ struct TravelRecordService {
             place.countryCode = countryCode
             place.countryName = countryName
             place.administrativeArea = administrativeArea
-            place.firstVisitedAt = minDate(existing.firstVisitedAt, firstVisitedAt)
-            place.lastVisitedAt = maxDate(existing.lastVisitedAt, lastVisitedAt)
         } else {
             place = PlaceRecord(canonicalKey: canonicalKey, kind: kind, name: name,
                                 latitude: coordinate.latitude, longitude: coordinate.longitude,
                                 countryCode: countryCode, countryName: countryName,
                                 administrativeArea: administrativeArea, locality: name,
-                                status: status, firstVisitedAt: firstVisitedAt, lastVisitedAt: lastVisitedAt,
-                                source: source)
+                                status: status, source: source)
             context.insert(place)
         }
         try apply(status, to: place)
         return place
+    }
+
+    func addVisit(to place: PlaceRecord, startDate: Date, endDate: Date? = nil,
+                  source: VisitSource = .manual, status: StatusDraft? = nil) throws {
+        guard endDate == nil || endDate! >= startDate else { throw VisitValidationError.endBeforeStart }
+        let visit = VisitRecord(startDate: startDate, endDate: endDate, source: source)
+        context.insert(visit)
+        place.visits.append(visit)
+        var updatedStatus = status ?? place.status
+        updatedStatus.setVisited(true)
+        try apply(updatedStatus, to: place)
+    }
+
+    func update(_ visit: VisitRecord, startDate: Date, endDate: Date?) throws {
+        guard endDate == nil || endDate! >= startDate else { throw VisitValidationError.endBeforeStart }
+        visit.startDate = startDate
+        visit.endDate = endDate
+        visit.updatedAt = .now
+        visit.place?.updatedAt = .now
+        try context.save()
+    }
+
+    func delete(_ visit: VisitRecord) throws {
+        let place = visit.place
+        context.delete(visit)
+        try context.save()
+        if let place { try apply(place.status, to: place) }
     }
 
     func delete(_ place: PlaceRecord) throws {
@@ -140,11 +183,10 @@ struct TravelRecordService {
         if countryCode == "AU" { return "continent:oceania" }
         return nil
     }
+}
 
-    private func minDate(_ lhs: Date?, _ rhs: Date?) -> Date? {
-        [lhs, rhs].compactMap { $0 }.min()
-    }
-    private func maxDate(_ lhs: Date?, _ rhs: Date?) -> Date? {
-        [lhs, rhs].compactMap { $0 }.max()
-    }
+enum VisitValidationError: LocalizedError {
+    case endBeforeStart
+
+    var errorDescription: String? { "A visit’s end date cannot be before its start date." }
 }

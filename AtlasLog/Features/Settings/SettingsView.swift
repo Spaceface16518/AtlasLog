@@ -75,9 +75,10 @@ struct SettingsView: View {
             for (index, sample) in samples.enumerated() {
                 var status = StatusDraft(); status.setVisited(true); status.setMeaningful(index != 0)
                 if sample.1 == "London" { status.setWantToReturn(true) }
-                _ = try service.upsert(canonicalKey: "geonames:\(sample.0)", name: sample.1,
+                _ = try service.addVisit(canonicalKey: "geonames:\(sample.0)", name: sample.1,
                     coordinate: .init(longitude: sample.3, latitude: sample.2), countryCode: sample.4,
-                    countryName: sample.5, source: .sample, status: status)
+                    countryName: sample.5, source: .sample, status: status,
+                    startDate: Calendar.current.date(byAdding: .year, value: -index - 1, to: .now) ?? .now)
             }
             message = "Loaded the clearly labeled six-city sample journey."
         } catch { message = "Sample data could not be loaded." }
