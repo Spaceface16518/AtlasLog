@@ -4,20 +4,26 @@ import SwiftUI
 struct ExplorePage: View {
     @Query(sort: \PlaceRecord.name) private var places: [PlaceRecord]
     @Query private var areaStatuses: [AreaStatus]
-    @Bindable var navigation: MapNavigationState
     @State private var searchState: PlaceSearchState
     @State private var filter: StatusFilter = .all
     @State private var newSeed: PlaceSeed?
     @State private var editingPlace: PlaceRecord?
     @State private var editingRegion: RegionNode?
 
+    let mapLevel: RegionLevel
     let regionNodes: [RegionNode]
     let mapCenter: CoordinateValue
+    let showPlaceOnMap: (PlaceRecord) -> Void
+    let showRegionOnMap: (String, CoordinateValue?) -> Void
 
-    init(navigation: MapNavigationState, cityCatalog: CityCatalog, regionNodes: [RegionNode], mapCenter: CoordinateValue) {
-        self.navigation = navigation
+    init(mapLevel: RegionLevel, cityCatalog: CityCatalog, regionNodes: [RegionNode],
+         mapCenter: CoordinateValue, showPlaceOnMap: @escaping (PlaceRecord) -> Void,
+         showRegionOnMap: @escaping (String, CoordinateValue?) -> Void) {
+        self.mapLevel = mapLevel
         self.regionNodes = regionNodes
         self.mapCenter = mapCenter
+        self.showPlaceOnMap = showPlaceOnMap
+        self.showRegionOnMap = showRegionOnMap
         _searchState = State(initialValue: PlaceSearchState(cityCatalog: cityCatalog))
     }
 
@@ -37,7 +43,7 @@ struct ExplorePage: View {
                 .font(.subheadline.weight(.medium))
 
                 if searchState.query.isEmpty {
-                    if navigation.level == .city { placeList }
+                    if mapLevel == .city { placeList }
                     else { areaList }
                 }
             }
@@ -66,19 +72,16 @@ struct ExplorePage: View {
     }
 
     @ViewBuilder private var areaList: some View {
-        let nodes = regionNodes.filter { $0.level == navigation.level }
+        let nodes = regionNodes.filter { $0.level == mapLevel }
         if nodes.isEmpty {
-            ContentUnavailableView("No bundled \(navigation.level.title.lowercased())", systemImage: "square.3.layers.3d",
+            ContentUnavailableView("No bundled \(mapLevel.title.lowercased())", systemImage: "square.3.layers.3d",
                                    description: Text("This area remains usable once more catalog coverage is bundled."))
                 .frame(minHeight: 180)
         } else {
-            sectionHeader(navigation.level.title, count: nodes.count)
+            sectionHeader(mapLevel.title, count: nodes.count)
             ForEach(nodes) { node in
                 Button {
-                    navigation.selectedRegionID = node.id
-                    if let lat = node.centroidLatitude, let lon = node.centroidLongitude {
-                        navigation.focusCoordinate = .init(longitude: lon, latitude: lat)
-                    }
+                    showRegionOnMap(node.id, node.coordinate)
                     editingRegion = node
                 } label: {
                     let status = areaStatuses.first { $0.areaID == node.id }
@@ -113,8 +116,7 @@ struct ExplorePage: View {
                   administrativeArea: nil, source: .manual)
     }
     private func focus(_ place: PlaceRecord) {
-        navigation.selectedPlaceID = place.id
-        navigation.focusCoordinate = .init(longitude: place.longitude, latitude: place.latitude)
+        showPlaceOnMap(place)
     }
 }
 
@@ -172,9 +174,14 @@ struct AreaDetailView: View {
 
 #if DEBUG
 #Preview("Explore — populated") {
-    ExplorePage(navigation: MapNavigationState(), cityCatalog: CityCatalog(cities: []),
-                regionNodes: PreviewSupport.nodes,
-                mapCenter: .init(longitude: -71.967, latitude: -13.523))
+    ExplorePage(
+        mapLevel: .city,
+        cityCatalog: CityCatalog(cities: []),
+        regionNodes: PreviewSupport.nodes,
+        mapCenter: .init(longitude: -71.967, latitude: -13.523),
+        showPlaceOnMap: { _ in },
+        showRegionOnMap: { _, _ in }
+    )
         .modelContainer(PreviewSupport.container(populated: true))
 }
 

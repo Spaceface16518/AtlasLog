@@ -1,9 +1,7 @@
 import Foundation
-import Observation
+import SwiftUI
 
-@MainActor
-@Observable
-final class AppDependencies {
+struct AppDependencies: Sendable {
     let cityCatalog: CityCatalog
     let regionCatalog: RegionCatalog
     let regionMembership = RegionMembershipService()
@@ -12,4 +10,8 @@ final class AppDependencies {
         cityCatalog = CityCatalog(bundle: bundle)
         regionCatalog = RegionCatalog(bundle: bundle)
     }
+}
+
+extension EnvironmentValues {
+    @Entry var appDependencies = AppDependencies()
 }

@@ -34,6 +34,8 @@ final class AtlasLogUITests: XCTestCase {
         passport.tap()
         XCTAssertTrue(app.staticTexts["1"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Dallas"].waitForExistence(timeout: 5))
+        app.staticTexts["Dallas"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Explore"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchArguments = ["--ui-testing-expanded"]

@@ -44,6 +44,11 @@ struct RegionNode: Codable, Identifiable, Sendable, Hashable {
     let geometryFeatureIDs: [String]
     let boundaryKind: BoundaryKind
     let notes: String?
+
+    var coordinate: CoordinateValue? {
+        guard let centroidLatitude, let centroidLongitude else { return nil }
+        return CoordinateValue(longitude: centroidLongitude, latitude: centroidLatitude)
+    }
 }
 
 enum RegionMembership: String, Codable, Sendable { case core, transition, associated }

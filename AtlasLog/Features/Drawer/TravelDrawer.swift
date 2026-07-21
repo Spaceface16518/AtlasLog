@@ -4,23 +4,28 @@ import SwiftUI
 struct TravelDrawer: View {
     @Query private var places: [PlaceRecord]
     @Query private var areas: [AreaStatus]
-    @Environment(AppDependencies.self) private var dependencies
-    @Bindable var navigation: MapNavigationState
+    @Environment(\.appDependencies) private var dependencies
+    @Binding var mapLevel: RegionLevel
+    @State private var selectedPage = DrawerPage.explore
     let nodes: [RegionNode]
     let mapCenter: CoordinateValue
+    let showPlaceOnMap: (PlaceRecord) -> Void
+    let showRegionOnMap: (String, CoordinateValue?) -> Void
 
     private var summary: PassportStatistics { PassportStatisticsService().calculate(places: places, areas: areas) }
 
     var body: some View {
-        TabView(selection: $navigation.drawerPage) {
+        TabView(selection: $selectedPage) {
             Tab("Explore", systemImage: "map", value: DrawerPage.explore) {
                 VStack(spacing: 10) {
                     drawerHeader
                     ExplorePage(
-                        navigation: navigation,
+                        mapLevel: mapLevel,
                         cityCatalog: dependencies.cityCatalog,
                         regionNodes: nodes,
-                        mapCenter: mapCenter
+                        mapCenter: mapCenter,
+                        showPlaceOnMap: showPlaceOnMap,
+                        showRegionOnMap: showRegionOnMap
                     )
                 }
             }
@@ -28,7 +33,11 @@ struct TravelDrawer: View {
             Tab("Passport", systemImage: "book.closed", value: DrawerPage.passport) {
                 VStack(spacing: 10) {
                     drawerHeader
-                    PassportPage(navigation: navigation, nodes: nodes)
+                    PassportPage(
+                        nodes: nodes,
+                        showPlaceOnMap: showPlaceFromPassport,
+                        showAreaOnMap: showAreaFromPassport
+                    )
                 }
             }
 
@@ -47,22 +56,40 @@ struct TravelDrawer: View {
     private var drawerHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(navigation.drawerPage.rawValue).font(.headline)
+                Text(selectedPage.rawValue).font(.headline)
                 Text("\(summary.countriesVisited) countries • \(summary.citiesVisited) cities")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            MapLevelMenu(level: $navigation.level)
+            MapLevelMenu(level: $mapLevel)
         }
         .padding(.horizontal)
+    }
+
+    private func showPlaceFromPassport(_ place: PlaceRecord) {
+        selectedPage = .explore
+        mapLevel = .city
+        showPlaceOnMap(place)
+    }
+
+    private func showAreaFromPassport(_ area: AreaStatus) {
+        selectedPage = .explore
+        mapLevel = area.level
+        showRegionOnMap(area.areaID, nodes.first { $0.id == area.areaID }?.coordinate)
     }
 }
 
 #if DEBUG
 #Preview("Travel drawer") {
-    TravelDrawer(navigation: MapNavigationState(), nodes: PreviewSupport.nodes,
-                 mapCenter: .init(longitude: -71.967, latitude: -13.523))
-        .environment(AppDependencies())
+    @Previewable @State var mapLevel = RegionLevel.city
+    TravelDrawer(
+        mapLevel: $mapLevel,
+        nodes: PreviewSupport.nodes,
+        mapCenter: .init(longitude: -71.967, latitude: -13.523),
+        showPlaceOnMap: { _ in },
+        showRegionOnMap: { _, _ in }
+    )
+        .environment(\.appDependencies, AppDependencies())
         .modelContainer(PreviewSupport.container(populated: true))
 }
 #endif

@@ -4,8 +4,9 @@ import SwiftUI
 struct PassportPage: View {
     @Query(sort: \PlaceRecord.name) private var places: [PlaceRecord]
     @Query private var areas: [AreaStatus]
-    @Bindable var navigation: MapNavigationState
     let nodes: [RegionNode]
+    let showPlaceOnMap: (PlaceRecord) -> Void
+    let showAreaOnMap: (AreaStatus) -> Void
 
     private var statistics: PassportStatistics { PassportStatisticsService().calculate(places: places, areas: areas) }
 
@@ -59,10 +60,7 @@ struct PassportPage: View {
         if !tracked.isEmpty {
             Text("Cities and places").font(.headline)
             ForEach(tracked) { place in
-                Button {
-                    navigation.drawerPage = .explore; navigation.level = .city; navigation.selectedPlaceID = place.id
-                    navigation.focusCoordinate = .init(longitude: place.longitude, latitude: place.latitude)
-                } label: {
+                Button { showPlaceOnMap(place) } label: {
                     PlaceRow(title: place.name, subtitle: place.countryName,
                              symbol: place.isMeaningfulVisit ? "checkmark.circle.fill" : (place.isWantToVisit ? "star.circle" : "checkmark.circle"))
                 }.buttonStyle(.plain)
@@ -76,10 +74,7 @@ struct PassportPage: View {
         return area.areaID
     }
     private func select(_ area: AreaStatus) {
-        navigation.drawerPage = .explore; navigation.level = area.level; navigation.selectedRegionID = area.areaID
-        if let node = nodes.first(where: { $0.id == area.areaID }), let lat = node.centroidLatitude, let lon = node.centroidLongitude {
-            navigation.focusCoordinate = .init(longitude: lon, latitude: lat)
-        }
+        showAreaOnMap(area)
     }
 }
 
@@ -102,12 +97,12 @@ struct PassportMetricCard: View {
 
 #if DEBUG
 #Preview("Empty passport") {
-    PassportPage(navigation: MapNavigationState(), nodes: [])
+    PassportPage(nodes: [], showPlaceOnMap: { _ in }, showAreaOnMap: { _ in })
         .modelContainer(PreviewSupport.container())
 }
 
 #Preview("Populated passport") {
-    PassportPage(navigation: MapNavigationState(), nodes: PreviewSupport.nodes)
+    PassportPage(nodes: PreviewSupport.nodes, showPlaceOnMap: { _ in }, showAreaOnMap: { _ in })
         .modelContainer(PreviewSupport.container(populated: true))
 }
 

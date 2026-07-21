@@ -3,7 +3,7 @@ import SwiftUI
 
 @main
 struct AtlasLogApp: App {
-    @State private var dependencies = AppDependencies()
+    private let dependencies = AppDependencies()
     private let container: ModelContainer
 
     init() {
@@ -26,7 +26,7 @@ struct AtlasLogApp: App {
     var body: some Scene {
         WindowGroup {
             TravelMapScreen()
-                .environment(dependencies)
+                .environment(\.appDependencies, dependencies)
         }
         .modelContainer(container)
     }

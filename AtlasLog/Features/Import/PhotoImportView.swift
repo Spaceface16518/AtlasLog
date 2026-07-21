@@ -5,7 +5,7 @@ import OSLog
 
 struct PhotoImportView: View {
     @Environment(\.modelContext) private var context
-    @Environment(AppDependencies.self) private var dependencies
+    @Environment(\.appDependencies) private var dependencies
     @Query private var importedAssets: [ImportedAssetRecord]
     @State private var selections: [PhotosPickerItem] = []
     @State private var candidates: [PhotoImportCandidate] = []
@@ -231,7 +231,7 @@ struct ImportLocationSearchView: View {
 #if DEBUG
 #Preview("Photo import — empty") {
     NavigationStack { PhotoImportView() }
-        .environment(AppDependencies())
+        .environment(\.appDependencies, AppDependencies())
         .modelContainer(PreviewSupport.container())
 }
 
