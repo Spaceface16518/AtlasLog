@@ -159,3 +159,11 @@ struct TravelMapScreen: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Main map") {
+    TravelMapScreen()
+        .environment(AppDependencies())
+        .modelContainer(PreviewSupport.container(populated: true))
+}
+#endif

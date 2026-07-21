@@ -169,3 +169,17 @@ struct AreaDetailView: View {
         catch { errorMessage = "The area status could not be saved." }
     }
 }
+
+#if DEBUG
+#Preview("Explore — populated") {
+    ExplorePage(navigation: MapNavigationState(), cityCatalog: CityCatalog(cities: []),
+                regionNodes: PreviewSupport.nodes,
+                mapCenter: .init(longitude: -71.967, latitude: -13.523))
+        .modelContainer(PreviewSupport.container(populated: true))
+}
+
+#Preview("Area detail") {
+    AreaDetailView(node: PreviewSupport.nodes[1])
+        .modelContainer(PreviewSupport.container(populated: true))
+}
+#endif

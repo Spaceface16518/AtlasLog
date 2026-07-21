@@ -57,3 +57,12 @@ struct TravelDrawer: View {
         .padding(.horizontal)
     }
 }
+
+#if DEBUG
+#Preview("Travel drawer") {
+    TravelDrawer(navigation: MapNavigationState(), nodes: PreviewSupport.nodes,
+                 mapCenter: .init(longitude: -71.967, latitude: -13.523))
+        .environment(AppDependencies())
+        .modelContainer(PreviewSupport.container(populated: true))
+}
+#endif

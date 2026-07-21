@@ -99,3 +99,13 @@ struct AcknowledgementsView: View {
             }
     }
 }
+
+#if DEBUG
+#Preview("Settings") {
+    SettingsView().modelContainer(PreviewSupport.container(populated: true))
+}
+
+#Preview("Acknowledgements") {
+    NavigationStack { AcknowledgementsView() }
+}
+#endif

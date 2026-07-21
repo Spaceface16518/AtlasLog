@@ -74,3 +74,18 @@ struct PlaceMarker: View {
         return "tracked"
     }
 }
+
+#if DEBUG
+#Preview("Map level menu") {
+    @Previewable @State var level = RegionLevel.travelRegion
+    MapLevelMenu(level: $level).padding()
+}
+
+#Preview("Place marker states") {
+    HStack(spacing: 24) {
+        PlaceMarker(place: PreviewSupport.place, selected: false)
+        PlaceMarker(place: PreviewSupport.place, selected: true)
+    }
+    .padding()
+}
+#endif

@@ -151,3 +151,14 @@ struct PlaceEditorView: View {
 private extension String {
     var nilIfEmpty: String? { trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self }
 }
+
+#if DEBUG
+#Preview("Place editor — dark, large type") {
+    PlaceEditorView(place: nil, seed: PlaceSeed(canonicalKey: nil, mapItemIdentifier: nil, kind: .city,
+        name: "Cusco", subtitle: "Peru", coordinate: .init(longitude: -71.967, latitude: -13.523),
+        countryCode: "PE", countryName: "Peru", administrativeArea: "Cusco", source: .bundledCatalog))
+        .modelContainer(PreviewSupport.container())
+        .preferredColorScheme(.dark)
+        .environment(\.dynamicTypeSize, .accessibility2)
+}
+#endif

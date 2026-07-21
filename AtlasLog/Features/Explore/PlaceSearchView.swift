@@ -77,3 +77,38 @@ struct PlaceRow: View {
         .padding(.vertical, 4)
     }
 }
+
+#if DEBUG
+#Preview("Place search") {
+    PlaceSearchPreview()
+}
+
+#Preview("Place row") {
+    VStack(spacing: 12) {
+        PlaceRow(title: "Cusco", subtitle: "Peru", symbol: "building.2")
+        PlaceRow(title: "Machu Picchu", subtitle: "Resolving with Apple Maps", symbol: "mappin.and.ellipse",
+                 trailingProgress: true)
+    }
+    .padding()
+}
+
+@MainActor
+private struct PlaceSearchPreview: View {
+    @State private var state: PlaceSearchState
+
+    init() {
+        let cities = [
+            CityRecord(id: "3941584", name: "Cusco", normalizedName: "cusco", alternateNames: [],
+                       latitude: -13.5226, longitude: -71.9673, countryCode: "PE", countryName: "Peru",
+                       administrativeArea: "Cusco", population: 428_450)
+        ]
+        let state = PlaceSearchState(cityCatalog: CityCatalog(cities: cities))
+        state.query = "Cusco"
+        _state = State(initialValue: state)
+    }
+
+    var body: some View {
+        ScrollView { PlaceSearchView(state: state) { _ in }.padding() }
+    }
+}
+#endif

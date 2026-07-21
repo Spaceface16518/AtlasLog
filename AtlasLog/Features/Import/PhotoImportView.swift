@@ -227,3 +227,23 @@ struct ImportLocationSearchView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+#if DEBUG
+#Preview("Photo import — empty") {
+    NavigationStack { PhotoImportView() }
+        .environment(AppDependencies())
+        .modelContainer(PreviewSupport.container())
+}
+
+#Preview("Photo review row") {
+    @Previewable @State var candidate = PreviewSupport.candidate
+    List { ImportCandidateRow(candidate: $candidate, cityCatalog: CityCatalog(cities: [])) }
+}
+
+#Preview("Import location search") {
+    @Previewable @State var candidate = PreviewSupport.candidate
+    NavigationStack {
+        ImportLocationSearchView(candidate: $candidate, cityCatalog: CityCatalog(cities: []))
+    }
+}
+#endif

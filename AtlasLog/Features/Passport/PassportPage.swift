@@ -99,3 +99,21 @@ struct PassportMetricCard: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+#if DEBUG
+#Preview("Empty passport") {
+    PassportPage(navigation: MapNavigationState(), nodes: [])
+        .modelContainer(PreviewSupport.container())
+}
+
+#Preview("Populated passport") {
+    PassportPage(navigation: MapNavigationState(), nodes: PreviewSupport.nodes)
+        .modelContainer(PreviewSupport.container(populated: true))
+}
+
+#Preview("Passport metric card") {
+    PassportMetricCard(value: 12, title: "Countries", symbol: "globe.americas")
+        .frame(width: 140)
+        .padding()
+}
+#endif
