@@ -16,5 +16,10 @@ struct CatalogDecodingTests {
         #expect(geometries.filter { $0.regionID.hasPrefix("subcontinent:") }.count >= 20)
         #expect(nodes.filter { $0.level == .continent }.allSatisfy { !$0.geometryFeatureIDs.isEmpty })
         #expect(nodes.filter { $0.level == .subcontinent }.allSatisfy { !$0.geometryFeatureIDs.isEmpty })
+        let southernAfrica = try #require(
+            geometries.first { $0.regionID == "subcontinent:southern-africa" }
+        )
+        #expect(southernAfrica.definition.contains("dissolved"))
+        #expect(southernAfrica.polygons.count == 1)
     }
 }

@@ -6,7 +6,7 @@ United Nations Statistics Division M49 overview page. The checked-in Natural
 Earth country polygons remain the only geometry source.
 
 Usage:
-  python3 Scripts/generate_composed_region_geojson.py \
+  uv run --with shapely python Scripts/generate_composed_region_geojson.py \
     --m49-html /tmp/m49-overview.html \
     --countries AtlasLog/Resources/country_boundaries.geojson \
     --hierarchy AtlasLog/Resources/region_hierarchy.json \
@@ -21,6 +21,9 @@ from collections import defaultdict
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
+
+from shapely import union_all
+from shapely.geometry import MultiPolygon, mapping, shape
 
 M49_SOURCE = (
     "United Nations Statistics Division M49 geographic regions "
@@ -177,9 +180,15 @@ def center(features: list[dict[str, Any]]) -> tuple[float, float]:
 def composed_feature(
     region_id: str, name: str, members: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    member_polygons = [
-        polygon for feature in members for polygon in polygons(feature)
-    ]
+    dissolved = union_all([shape(feature["geometry"]) for feature in members])
+    if dissolved.geom_type == "Polygon":
+        dissolved = MultiPolygon([dissolved])
+    if dissolved.geom_type != "MultiPolygon":
+        raise ValueError(
+            f"Composing {region_id} produced unsupported geometry "
+            f"{dissolved.geom_type}."
+        )
+    dissolved_geometry = mapping(dissolved)
     return {
         "type": "Feature",
         "properties": {
@@ -187,13 +196,12 @@ def composed_feature(
             "regionID": region_id,
             "membership": "core",
             "boundaryKind": "geographic",
-            "definition": f"{name}, composed from {len(members)} country geometries",
+            "definition": (
+                f"{name}, dissolved from {len(members)} country geometries"
+            ),
             "source": f"{NATURAL_EARTH_SOURCE}; membership: {M49_SOURCE}",
         },
-        "geometry": {
-            "type": "MultiPolygon",
-            "coordinates": member_polygons,
-        },
+        "geometry": dissolved_geometry,
     }
 
 

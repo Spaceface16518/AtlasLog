@@ -65,7 +65,7 @@ from a downloaded copy of the official English overview table:
 ```sh
 curl -L https://unstats.un.org/unsd/methodology/m49/overview/ \
   -o /tmp/m49-overview.html
-python3 Scripts/generate_composed_region_geojson.py \
+uv run --with shapely python Scripts/generate_composed_region_geojson.py \
   --m49-html /tmp/m49-overview.html \
   --countries AtlasLog/Resources/country_boundaries.geojson \
   --hierarchy AtlasLog/Resources/region_hierarchy.json \
@@ -78,6 +78,11 @@ the Caribbean compose North America. The generator documents explicit
 assignments for the separately drawn Natural Earth map units that M49 does not
 list separately (Northern Cyprus, Kosovo, Somaliland, and Taiwan), and excludes
 Antarctica because it is not an AtlasLog display level.
+
+Country shapes are dissolved into each aggregate before writing GeoJSON. This
+removes shared country edges so continent and subcontinent map levels render
+only their respective aggregate borders; the country level continues to use
+the original country resource.
 
 Builds never download resources. Generated JSON and GeoJSON are checked into the app target.
 
