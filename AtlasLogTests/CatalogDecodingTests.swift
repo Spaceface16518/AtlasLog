@@ -12,6 +12,9 @@ struct CatalogDecodingTests {
         #expect(nodes.contains { $0.id == "travel:cascadia" })
         #expect(geometries.contains { $0.membership == .transition })
         #expect(geometries.filter { $0.regionID.hasPrefix("country:") }.count >= 170)
-        #expect(nodes.contains { $0.geometryFeatureIDs.isEmpty })
+        #expect(geometries.filter { $0.regionID.hasPrefix("continent:") }.count == 6)
+        #expect(geometries.filter { $0.regionID.hasPrefix("subcontinent:") }.count >= 20)
+        #expect(nodes.filter { $0.level == .continent }.allSatisfy { !$0.geometryFeatureIDs.isEmpty })
+        #expect(nodes.filter { $0.level == .subcontinent }.allSatisfy { !$0.geometryFeatureIDs.isEmpty })
     }
 }

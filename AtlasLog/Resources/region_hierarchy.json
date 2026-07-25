@@ -1,17 +1,417 @@
 [
-  {"id":"continent:north-america","name":"North America","level":"continent","parentID":null,"centroidLatitude":47.0,"centroidLongitude":-105.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"continent:south-america","name":"South America","level":"continent","parentID":null,"centroidLatitude":-15.0,"centroidLongitude":-60.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"continent:europe","name":"Europe","level":"continent","parentID":null,"centroidLatitude":54.0,"centroidLongitude":15.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"continent:asia","name":"Asia","level":"continent","parentID":null,"centroidLatitude":34.0,"centroidLongitude":100.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"continent:africa","name":"Africa","level":"continent","parentID":null,"centroidLatitude":2.0,"centroidLongitude":20.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"continent:oceania","name":"Oceania","level":"continent","parentID":null,"centroidLatitude":-25.0,"centroidLongitude":135.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"subcontinent:northern-europe","name":"Northern Europe","level":"subcontinent","parentID":"continent:europe","centroidLatitude":58.0,"centroidLongitude":15.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"subcontinent:southern-europe","name":"Southern Europe","level":"subcontinent","parentID":"continent:europe","centroidLatitude":41.0,"centroidLongitude":12.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"subcontinent:south-america","name":"South America","level":"subcontinent","parentID":"continent:south-america","centroidLatitude":-15.0,"centroidLongitude":-60.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":null},
-  {"id":"macro:andes","name":"Andes","level":"macroRegion","parentID":"continent:south-america","centroidLatitude":-15.0,"centroidLongitude":-72.0,"geometryFeatureIDs":[],"boundaryKind":"geographic","notes":"Geometry is not bundled in the MVP sample."},
-  {"id":"travel:iberia","name":"Iberia","level":"travelRegion","parentID":"subcontinent:southern-europe","centroidLatitude":40.0,"centroidLongitude":-4.0,"geometryFeatureIDs":["iberia-core"],"boundaryKind":"culturalApproximation","notes":"App-defined travel grouping from country units."},
-  {"id":"travel:baltics","name":"The Baltics","level":"travelRegion","parentID":"subcontinent:northern-europe","centroidLatitude":57.0,"centroidLongitude":24.0,"geometryFeatureIDs":["baltics-core"],"boundaryKind":"culturalApproximation","notes":"Estonia, Latvia, and Lithuania."},
-  {"id":"travel:benelux","name":"Benelux","level":"travelRegion","parentID":"continent:europe","centroidLatitude":51.0,"centroidLongitude":5.0,"geometryFeatureIDs":["benelux-core"],"boundaryKind":"administrative","notes":"Belgium, Netherlands, and Luxembourg."},
-  {"id":"travel:nordics","name":"Nordic countries","level":"travelRegion","parentID":"subcontinent:northern-europe","centroidLatitude":62.0,"centroidLongitude":15.0,"geometryFeatureIDs":["nordics-core"],"boundaryKind":"culturalApproximation","notes":"MVP simplified geometry."},
-  {"id":"travel:cascadia","name":"Cascadia","level":"travelRegion","parentID":"continent:north-america","centroidLatitude":47.5,"centroidLongitude":-122.0,"geometryFeatureIDs":["cascadia-core","cascadia-transition"],"boundaryKind":"culturalApproximation","notes":"App-defined travel grouping, not an authoritative cultural border."}
+  {
+    "id": "continent:africa",
+    "name": "Africa",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": -6.2125,
+    "centroidLongitude": 26.4675,
+    "geometryFeatureIDs": [
+      "continent-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:eastern-africa",
+    "name": "Eastern Africa",
+    "level": "subcontinent",
+    "parentID": "continent:africa",
+    "centroidLatitude": -15.8883,
+    "centroidLongitude": 46.2239,
+    "geometryFeatureIDs": [
+      "subcontinent-eastern-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:middle-africa",
+    "name": "Middle Africa",
+    "level": "subcontinent",
+    "parentID": "continent:africa",
+    "centroidLatitude": 2.7395,
+    "centroidLongitude": 19.8315,
+    "geometryFeatureIDs": [
+      "subcontinent-middle-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:northern-africa",
+    "name": "Northern Africa",
+    "level": "subcontinent",
+    "parentID": "continent:africa",
+    "centroidLatitude": 22.7896,
+    "centroidLongitude": 10.6733,
+    "geometryFeatureIDs": [
+      "subcontinent-northern-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:southern-africa",
+    "name": "Southern Africa",
+    "level": "subcontinent",
+    "parentID": "continent:africa",
+    "centroidLatitude": -25.8803,
+    "centroidLongitude": 22.2822,
+    "geometryFeatureIDs": [
+      "subcontinent-southern-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:western-africa",
+    "name": "Western Africa",
+    "level": "subcontinent",
+    "parentID": "continent:africa",
+    "centroidLatitude": 15.8182,
+    "centroidLongitude": -0.8609,
+    "geometryFeatureIDs": [
+      "subcontinent-western-africa-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "continent:asia",
+    "name": "Asia",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": 22.5126,
+    "centroidLongitude": 85.7932,
+    "geometryFeatureIDs": [
+      "continent-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:central-asia",
+    "name": "Central Asia",
+    "level": "subcontinent",
+    "parentID": "continent:asia",
+    "centroidLatitude": 45.328,
+    "centroidLongitude": 66.9132,
+    "geometryFeatureIDs": [
+      "subcontinent-central-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:eastern-asia",
+    "name": "Eastern Asia",
+    "level": "subcontinent",
+    "parentID": "continent:asia",
+    "centroidLatitude": 35.8283,
+    "centroidLongitude": 109.6093,
+    "geometryFeatureIDs": [
+      "subcontinent-eastern-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:south-eastern-asia",
+    "name": "South-eastern Asia",
+    "level": "subcontinent",
+    "parentID": "continent:asia",
+    "centroidLatitude": 8.988,
+    "centroidLongitude": 116.6685,
+    "geometryFeatureIDs": [
+      "subcontinent-south-eastern-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:southern-asia",
+    "name": "Southern Asia",
+    "level": "subcontinent",
+    "parentID": "continent:asia",
+    "centroidLatitude": 22.8407,
+    "centroidLongitude": 70.7559,
+    "geometryFeatureIDs": [
+      "subcontinent-southern-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:western-asia",
+    "name": "Western Asia",
+    "level": "subcontinent",
+    "parentID": "continent:asia",
+    "centroidLatitude": 28.0695,
+    "centroidLongitude": 42.9257,
+    "geometryFeatureIDs": [
+      "subcontinent-western-asia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "continent:europe",
+    "name": "Europe",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": 41.6519,
+    "centroidLongitude": 67.7878,
+    "geometryFeatureIDs": [
+      "continent-europe-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:eastern-europe",
+    "name": "Eastern Europe",
+    "level": "subcontinent",
+    "parentID": "continent:europe",
+    "centroidLatitude": 61.2009,
+    "centroidLongitude": 101.1703,
+    "geometryFeatureIDs": [
+      "subcontinent-eastern-europe-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:northern-europe",
+    "name": "Northern Europe",
+    "level": "subcontinent",
+    "parentID": "continent:europe",
+    "centroidLatitude": 65.3086,
+    "centroidLongitude": 3.595,
+    "geometryFeatureIDs": [
+      "subcontinent-northern-europe-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:southern-europe",
+    "name": "Southern Europe",
+    "level": "subcontinent",
+    "parentID": "continent:europe",
+    "centroidLatitude": 41.0177,
+    "centroidLongitude": 8.5388,
+    "geometryFeatureIDs": [
+      "subcontinent-southern-europe-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:western-europe",
+    "name": "Western Europe",
+    "level": "subcontinent",
+    "parentID": "continent:europe",
+    "centroidLatitude": 28.5182,
+    "centroidLongitude": -18.7725,
+    "geometryFeatureIDs": [
+      "subcontinent-western-europe-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "continent:north-america",
+    "name": "North America",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": 45.4328,
+    "centroidLongitude": -91.9998,
+    "geometryFeatureIDs": [
+      "continent-north-america-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:caribbean",
+    "name": "Caribbean",
+    "level": "subcontinent",
+    "parentID": "continent:north-america",
+    "centroidLatitude": 18.52,
+    "centroidLongitude": -72.935,
+    "geometryFeatureIDs": [
+      "subcontinent-caribbean-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:central-america",
+    "name": "Central America",
+    "level": "subcontinent",
+    "parentID": "continent:north-america",
+    "centroidLatitude": 19.9707,
+    "centroidLongitude": -97.1852,
+    "geometryFeatureIDs": [
+      "subcontinent-central-america-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:northern-america",
+    "name": "Northern America",
+    "level": "subcontinent",
+    "parentID": "continent:north-america",
+    "centroidLatitude": 51.2807,
+    "centroidLongitude": -91.9998,
+    "geometryFeatureIDs": [
+      "subcontinent-northern-america-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "continent:south-america",
+    "name": "South America",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": -21.5873,
+    "centroidLongitude": -58.0705,
+    "geometryFeatureIDs": [
+      "continent-south-america-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:south-america",
+    "name": "South America",
+    "level": "subcontinent",
+    "parentID": "continent:south-america",
+    "centroidLatitude": -21.5873,
+    "centroidLongitude": -58.0705,
+    "geometryFeatureIDs": [
+      "subcontinent-south-america-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "continent:oceania",
+    "name": "Oceania",
+    "level": "continent",
+    "parentID": null,
+    "centroidLatitude": -24.5706,
+    "centroidLongitude": 146.7728,
+    "geometryFeatureIDs": [
+      "continent-oceania-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:australia-and-new-zealand",
+    "name": "Australia and New Zealand",
+    "level": "subcontinent",
+    "parentID": "continent:oceania",
+    "centroidLatitude": -28.6547,
+    "centroidLongitude": 145.928,
+    "geometryFeatureIDs": [
+      "subcontinent-australia-and-new-zealand-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "subcontinent:melanesia",
+    "name": "Melanesia",
+    "level": "subcontinent",
+    "parentID": "continent:oceania",
+    "centroidLatitude": -12.45,
+    "centroidLongitude": 160.6034,
+    "geometryFeatureIDs": [
+      "subcontinent-melanesia-countries"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Country membership follows United Nations Statistics Division M49 geographic regions (unstats.un.org/unsd/methodology/m49)."
+  },
+  {
+    "id": "macro:andes",
+    "name": "Andes",
+    "level": "macroRegion",
+    "parentID": "continent:south-america",
+    "centroidLatitude": -15.0,
+    "centroidLongitude": -72.0,
+    "geometryFeatureIDs": [],
+    "boundaryKind": "geographic",
+    "notes": "Geometry is not bundled in the MVP sample."
+  },
+  {
+    "id": "travel:iberia",
+    "name": "Iberia",
+    "level": "travelRegion",
+    "parentID": "subcontinent:southern-europe",
+    "centroidLatitude": 40.0,
+    "centroidLongitude": -4.0,
+    "geometryFeatureIDs": [
+      "iberia-core"
+    ],
+    "boundaryKind": "culturalApproximation",
+    "notes": "App-defined travel grouping from country units."
+  },
+  {
+    "id": "travel:baltics",
+    "name": "The Baltics",
+    "level": "travelRegion",
+    "parentID": "subcontinent:northern-europe",
+    "centroidLatitude": 57.0,
+    "centroidLongitude": 24.0,
+    "geometryFeatureIDs": [
+      "baltics-core"
+    ],
+    "boundaryKind": "culturalApproximation",
+    "notes": "Estonia, Latvia, and Lithuania."
+  },
+  {
+    "id": "travel:benelux",
+    "name": "Benelux",
+    "level": "travelRegion",
+    "parentID": "continent:europe",
+    "centroidLatitude": 51.0,
+    "centroidLongitude": 5.0,
+    "geometryFeatureIDs": [
+      "benelux-core"
+    ],
+    "boundaryKind": "administrative",
+    "notes": "Belgium, Netherlands, and Luxembourg."
+  },
+  {
+    "id": "travel:nordics",
+    "name": "Nordic countries",
+    "level": "travelRegion",
+    "parentID": "subcontinent:northern-europe",
+    "centroidLatitude": 62.0,
+    "centroidLongitude": 15.0,
+    "geometryFeatureIDs": [
+      "nordics-core"
+    ],
+    "boundaryKind": "culturalApproximation",
+    "notes": "MVP simplified geometry."
+  },
+  {
+    "id": "travel:cascadia",
+    "name": "Cascadia",
+    "level": "travelRegion",
+    "parentID": "continent:north-america",
+    "centroidLatitude": 47.5,
+    "centroidLongitude": -122.0,
+    "geometryFeatureIDs": [
+      "cascadia-core",
+      "cascadia-transition"
+    ],
+    "boundaryKind": "culturalApproximation",
+    "notes": "App-defined travel grouping, not an authoritative cultural border."
+  }
 ]

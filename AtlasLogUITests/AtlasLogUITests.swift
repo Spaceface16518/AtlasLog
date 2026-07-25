@@ -55,4 +55,25 @@ final class AtlasLogUITests: XCTestCase {
         app.buttons["Import"].tap()
         XCTAssertTrue(app.staticTexts["Choose travel photos"].waitForExistence(timeout: 5))
     }
+
+    @MainActor
+    func testComposedGeographyLevelsLoad() throws {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Explore"].waitForExistence(timeout: 8))
+
+        let mapLevel = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH 'Map level,'")
+        ).firstMatch
+        XCTAssertTrue(mapLevel.waitForExistence(timeout: 5))
+        mapLevel.tap()
+        app.buttons["Continents"].tap()
+        XCTAssertTrue(app.staticTexts["Africa"].waitForExistence(timeout: 5))
+
+        app.buttons["Map level, Continents"].firstMatch.tap()
+        app.buttons["Subcontinents"].tap()
+        XCTAssertTrue(
+            app.staticTexts["Northern Africa"].waitForExistence(timeout: 5)
+        )
+    }
 }

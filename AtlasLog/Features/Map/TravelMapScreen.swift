@@ -25,7 +25,9 @@ struct TravelMapScreen: View {
 
     var body: some View {
         Map(position: $position, selection: $selectedPlaceID) {
-            if mapLevel == .travelRegion || mapLevel == .country {
+            if [.travelRegion, .country, .subcontinent, .continent].contains(
+                mapLevel
+            ) {
                 ForEach(visibleGeometries) { geometry in
                     ForEach(Array(geometry.polygons.enumerated()), id: \.offset) { _, polygon in
                         if let exterior = polygon.first {
@@ -135,8 +137,16 @@ struct TravelMapScreen: View {
         return geometry.regionID == selectedRegionID ? Color.accentColor : Color.blue.opacity(geometry.membership == .core ? 0.7 : 0.35)
     }
     private var visibleGeometries: [RegionGeometry] {
-        if mapLevel == .country { return geometries.filter { $0.regionID.hasPrefix("country:") } }
-        return geometries.filter { $0.regionID.hasPrefix("travel:") }
+        let prefix =
+            switch mapLevel {
+            case .country: "country:"
+            case .travelRegion: "travel:"
+            case .subcontinent: "subcontinent:"
+            case .continent: "continent:"
+            case .city, .macroRegion: ""
+            }
+        return prefix.isEmpty
+            ? [] : geometries.filter { $0.regionID.hasPrefix(prefix) }
     }
 
     private func showPlaceOnMap(_ place: PlaceRecord) {

@@ -28,7 +28,8 @@ actor RegionCatalog {
         if let cachedGeometry { return cachedGeometry }
         let regions: GeoJSONFeatureCollection = try decode("travel_regions", extension: "geojson")
         let countries: GeoJSONFeatureCollection = try decode("country_boundaries", extension: "geojson")
-        let result = (countries.features + regions.features).compactMap { feature -> RegionGeometry? in
+        let composedRegions: GeoJSONFeatureCollection = try decode("composed_regions", extension: "geojson")
+        let result = (countries.features + regions.features + composedRegions.features).compactMap { feature -> RegionGeometry? in
             let depth = feature.geometry.type == "Polygon" ? 3 : 4
             guard let polygons = feature.geometry.coordinates.coordinateArrays(depth: depth) else { return nil }
             return RegionGeometry(id: feature.properties.featureID, regionID: feature.properties.regionID,

@@ -13,7 +13,9 @@ The product name is centralized in `AppIdentity`; stored data and domain APIs do
 - Apple Maps completion and selected-result resolution when a network is available.
 - Manual city, landmark, and coordinate entry plus editing and deletion.
 - Explicit multi-selection photo import, GPS/PHAsset metadata extraction, bounded processing, nearest-city matching, review, deduplication, and incremental saves.
-- Complete Natural Earth Admin 0 country geometry at 1:110m plus representative travel-region geometry.
+- Complete Natural Earth Admin 0 country geometry at 1:110m, country-composed
+  UN M49 continent/subcontinent geometry, and representative travel-region
+  geometry.
 - Derived country/continent roll-ups with manual overrides.
 - Passport metrics and hierarchical travel lists.
 - Local SwiftData persistence, debug-only sample journey, privacy controls, acknowledgements, and delete-all.
@@ -56,12 +58,35 @@ uv run --with pyshp python Scripts/generate_country_geojson.py \
   ne_110m_admin_0_countries.shp AtlasLog/Resources/country_boundaries.geojson
 ```
 
+Continent and subcontinent membership follows the United Nations Statistics
+Division M49 geographic hierarchy. Refresh the checked-in composed geometry
+from a downloaded copy of the official English overview table:
+
+```sh
+curl -L https://unstats.un.org/unsd/methodology/m49/overview/ \
+  -o /tmp/m49-overview.html
+python3 Scripts/generate_composed_region_geojson.py \
+  --m49-html /tmp/m49-overview.html \
+  --countries AtlasLog/Resources/country_boundaries.geojson \
+  --hierarchy AtlasLog/Resources/region_hierarchy.json \
+  --output AtlasLog/Resources/composed_regions.geojson
+```
+
+AtlasLog maps the M49 Americas into its existing six-continent taxonomy:
+South America remains separate, while Northern America, Central America, and
+the Caribbean compose North America. The generator documents explicit
+assignments for the separately drawn Natural Earth map units that M49 does not
+list separately (Northern Cyprus, Kosovo, Somaliland, and Taiwan), and excludes
+Antarctica because it is not an AtlasLog display level.
+
 Builds never download resources. Generated JSON and GeoJSON are checked into the app target.
 
 ## Data sources
 
 - GeoNames city schema/data, CC BY 4.0: `geonames.org`.
 - Natural Earth Admin 0 1:110m country geometry, public domain: `naturalearthdata.com`.
+- United Nations Statistics Division M49 geographic regions for country,
+  subregion, and region membership: `unstats.un.org`.
 - Apple Maps for map tiles, online suggestions, selected-place resolution, and reverse geocoding.
 
 The in-app acknowledgement screen reads `Resources/DataAttributions.md`.
@@ -75,7 +100,10 @@ A **meaningful visit** is a visited place the person wants included in main tota
 ## Known limitations
 
 - Cultural travel boundaries are interpretive; Cascadia is explicitly an app-defined travel grouping, not an authoritative cultural border.
-- Some hierarchy entries do not yet have geometry and focus via their centroid.
+- Large-region entries do not yet have geometry and focus via their centroid.
+- Natural Earth 1:110m omits the tiny countries of Micronesia and Polynesia, so
+  those two M49 subregions will appear only after the country source moves to a
+  finer scale.
 - The bundled city file is a sample fixture rather than the full GeoNames `cities15000` extract.
 - Apple Maps search, reverse geocoding, and uncached map imagery require network access.
 - Photo location metadata may be absent or stripped.
