@@ -6,7 +6,9 @@ struct TravelDrawer: View {
     @Query private var areas: [AreaStatus]
     @Environment(\.appDependencies) private var dependencies
     @Binding var mapLevel: RegionLevel
-    @State private var selectedPage = DrawerPage.explore
+    @Binding var selectedPage: DrawerPage
+    let selectedRegionID: String?
+    let regionSelectionRequest: UUID?
     let nodes: [RegionNode]
     let mapCenter: CoordinateValue
     let showPlaceOnMap: (PlaceRecord) -> Void
@@ -23,6 +25,8 @@ struct TravelDrawer: View {
                     drawerHeader
                     ExplorePage(
                         mapLevel: mapLevel,
+                        selectedRegionID: selectedRegionID,
+                        regionSelectionRequest: regionSelectionRequest,
                         cityCatalog: dependencies.cityCatalog,
                         regionNodes: nodes,
                         mapCenter: mapCenter,
@@ -97,8 +101,12 @@ struct TravelDrawer: View {
 #if DEBUG
     #Preview("Travel drawer") {
         @Previewable @State var mapLevel = RegionLevel.city
+        @Previewable @State var selectedPage = DrawerPage.explore
         TravelDrawer(
             mapLevel: $mapLevel,
+            selectedPage: $selectedPage,
+            selectedRegionID: nil,
+            regionSelectionRequest: nil,
             nodes: PreviewSupport.nodes,
             mapCenter: .init(longitude: -71.967, latitude: -13.523),
             showPlaceOnMap: { _ in },

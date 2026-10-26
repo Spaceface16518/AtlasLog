@@ -11,15 +11,20 @@ struct ExplorePage: View {
     @State private var editingRegion: RegionNode?
 
     let mapLevel: RegionLevel
+    let selectedRegionID: String?
+    let regionSelectionRequest: UUID?
     let regionNodes: [RegionNode]
     let mapCenter: CoordinateValue
     let showPlaceOnMap: (PlaceRecord) -> Void
     let showRegionOnMap: (String, CoordinateValue?) -> Void
 
-    init(mapLevel: RegionLevel, cityCatalog: CityCatalog, regionNodes: [RegionNode],
+    init(mapLevel: RegionLevel, selectedRegionID: String? = nil, regionSelectionRequest: UUID? = nil,
+         cityCatalog: CityCatalog, regionNodes: [RegionNode],
          mapCenter: CoordinateValue, showPlaceOnMap: @escaping (PlaceRecord) -> Void,
          showRegionOnMap: @escaping (String, CoordinateValue?) -> Void) {
         self.mapLevel = mapLevel
+        self.selectedRegionID = selectedRegionID
+        self.regionSelectionRequest = regionSelectionRequest
         self.regionNodes = regionNodes
         self.mapCenter = mapCenter
         self.showPlaceOnMap = showPlaceOnMap
@@ -28,27 +33,37 @@ struct ExplorePage: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 14) {
-                PlaceSearchView(state: searchState) { newSeed = $0 }
-                HStack {
-                    Picker("Status", selection: $filter) {
-                        ForEach(StatusFilter.allCases) { Text($0.rawValue).tag($0) }
+        ScrollViewReader { reader in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 14) {
+                    PlaceSearchView(state: searchState) { newSeed = $0 }
+                    HStack {
+                        Picker("Status", selection: $filter) {
+                            ForEach(StatusFilter.allCases) { Text($0.rawValue).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+                        Spacer()
+                        Button { newSeed = manualSeed } label: { Label("Add visit", systemImage: "plus") }
+                            .accessibilityIdentifier("add-visit")
                     }
-                    .pickerStyle(.menu)
-                    Spacer()
-                    Button { newSeed = manualSeed } label: { Label("Add visit", systemImage: "plus") }
-                        .accessibilityIdentifier("add-visit")
-                }
-                .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.medium))
 
-                if searchState.query.isEmpty {
-                    if mapLevel == .city { placeList }
-                    else { areaList }
+                    if searchState.query.isEmpty {
+                        if mapLevel == .city { placeList }
+                        else { areaList }
+                    }
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 40)
+            .task(id: regionSelectionRequest) {
+                guard let selectedRegionID else { return }
+                searchState.query = ""
+                // Let the region list replace any search results before scrolling.
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                withAnimation { reader.scrollTo(selectedRegionID, anchor: .top) }
+            }
         }
         .sheet(item: $newSeed) { PlaceEditorView(place: nil, seed: $0) { saved in focus(saved) } }
         .sheet(item: $editingPlace) { PlaceEditorView(place: $0, seed: nil) { saved in focus(saved) } }
@@ -86,7 +101,15 @@ struct ExplorePage: View {
                 } label: {
                     let status = areaStatuses.first { $0.areaID == node.id }
                     PlaceRow(title: node.name, subtitle: node.notes, symbol: status?.isVisited == true ? "checkmark.circle.fill" : "circle.dashed")
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(selectedRegionID == node.id ? Color.accentColor.opacity(0.15) : Color.clear,
+                                    in: RoundedRectangle(cornerRadius: 12))
                 }.buttonStyle(.plain)
+                    .id(node.id)
+                    .accessibilityIdentifier("region-row-\(node.id)")
+                    .accessibilityRemoveTraits(.isSelected)
+                    .accessibilityAddTraits(selectedRegionID == node.id ? .isSelected : [])
             }
         }
     }
