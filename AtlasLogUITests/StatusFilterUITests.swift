@@ -99,7 +99,14 @@ final class StatusFilterUITests: XCTestCase {
     }
 
     private func chooseLayer(_ title: String, in app: XCUIApplication) {
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Map level,'")).firstMatch.tap()
+        // The expanded drawer covers the map toolbar's duplicate picker.
+        let menus = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Map level,'"))
+        guard let menu = menus.allElementsBoundByIndex.first(where: { $0.isHittable }) else {
+            XCTFail("No visible map-level picker")
+            return
+        }
+        menu.tap()
+        XCTAssertTrue(app.buttons[title].waitForExistence(timeout: 5))
         app.buttons[title].tap()
     }
 
