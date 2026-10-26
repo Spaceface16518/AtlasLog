@@ -42,6 +42,8 @@ struct ExplorePage: View {
                             ForEach(StatusFilter.allCases) { Text($0.rawValue).tag($0) }
                         }
                         .pickerStyle(.menu)
+                        .accessibilityIdentifier("status-filter")
+                        .accessibilityValue(filter.rawValue)
                         Spacer()
                         Button { newSeed = manualSeed } label: { Label("Add visit", systemImage: "plus") }
                             .accessibilityIdentifier("add-visit")
@@ -59,6 +61,10 @@ struct ExplorePage: View {
             .task(id: regionSelectionRequest) {
                 guard let selectedRegionID else { return }
                 searchState.query = ""
+                if !filter.matches(areaStatuses.first { $0.areaID == selectedRegionID }?.status) {
+                    // An explicit map/Passport selection must have a visible row.
+                    filter = .all
+                }
                 // Let the region list replace any search results before scrolling.
                 await Task.yield()
                 guard !Task.isCancelled else { return }
@@ -71,30 +77,35 @@ struct ExplorePage: View {
     }
 
     @ViewBuilder private var placeList: some View {
-        let filtered = places.filter(matchesFilter)
-        if filtered.isEmpty {
+        let filtered = places.filter { filter.matches($0.status) }
+        if places.isEmpty && filter == .all {
             ContentUnavailableView("No visits yet", systemImage: "mappin.slash",
                                    description: Text("Search for a city or add a visit manually."))
                 .frame(minHeight: 180)
         } else {
             sectionHeader("Cities", count: filtered.count)
+            if filtered.isEmpty { noFilterMatches }
             ForEach(filtered) { place in
                 Button { editingPlace = place; focus(place) } label: {
                     PlaceRow(title: place.name, subtitle: place.countryName, symbol: statusSymbol(place))
                 }.buttonStyle(.plain)
+                    .accessibilityIdentifier("place-row-\(place.canonicalKey)")
             }
         }
     }
 
     @ViewBuilder private var areaList: some View {
         let nodes = regionNodes.filter { $0.level == mapLevel }
+        let statuses = Dictionary(uniqueKeysWithValues: areaStatuses.map { ($0.areaID, $0.status) })
+        let filtered = nodes.filter { filter.matches(statuses[$0.id]) }
         if nodes.isEmpty {
             ContentUnavailableView("No bundled \(mapLevel.title.lowercased())", systemImage: "square.3.layers.3d",
                                    description: Text("This area remains usable once more catalog coverage is bundled."))
                 .frame(minHeight: 180)
         } else {
-            sectionHeader(mapLevel.title, count: nodes.count)
-            ForEach(nodes) { node in
+            sectionHeader(mapLevel.title, count: filtered.count)
+            if filtered.isEmpty { noFilterMatches }
+            ForEach(filtered) { node in
                 Button {
                     showRegionOnMap(node.id, node.coordinate)
                     editingRegion = node
@@ -116,15 +127,22 @@ struct ExplorePage: View {
 
     private func sectionHeader(_ title: String, count: Int) -> some View {
         HStack { Text(title).font(.headline); Spacer(); Text(count, format: .number).foregroundStyle(.secondary) }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(title)
+            .accessibilityValue(String(count))
+            .accessibilityIdentifier("explore-result-count")
     }
-    private func matchesFilter(_ place: PlaceRecord) -> Bool {
-        switch filter {
-        case .all: true
-        case .visited: place.isVisited
-        case .meaningful: place.isMeaningfulVisit
-        case .wantToVisit: place.isWantToVisit
-        case .wantToReturn: place.isWantToReturn
+
+    private var noFilterMatches: some View {
+        ContentUnavailableView {
+            Label("No matching \(mapLevel.title.lowercased())", systemImage: "line.3.horizontal.decrease")
+        } description: {
+            Text("No \(mapLevel.title.lowercased()) match “\(filter.rawValue)”.")
+        } actions: {
+            Button("Show all") { filter = .all }
         }
+        .frame(minHeight: 180)
+        .accessibilityIdentifier("status-filter-empty")
     }
     private func statusSymbol(_ place: PlaceRecord) -> String {
         if place.isWantToReturn { return "arrow.uturn.backward.circle.fill" }
