@@ -45,13 +45,22 @@ The app does not request live-location access at launch.
 
 ### Latest validation
 
-On October 26, 2026, Xcode 27.1 passed all 41 tests on a regular iPhone 18 Pro
-simulator running iOS 27.0: 37 Swift Testing tests and four XCTest UI tests.
+On October 26, 2026, Xcode 27.1 passed all 45 tests on a regular iPhone 18 Pro
+simulator running iOS 27.0: 41 Swift Testing tests and four XCTest UI tests.
 Coverage includes V1-to-V2 migration, area roll-ups and deletion, photo matching,
 invalid-date rejection, visit and wishlist persistence, private notes, passport
 totals, map-level navigation, settings, and the photo-import entry screen.
-This is automated simulator evidence; manual review through Device Hub remains
-pending. The 30-city fixture and other MVP limitations below still apply.
+Regression coverage also verifies that geocoded photos retain their country
+for Passport totals and that cleared or retried searches discard stale errors.
+
+Interactive checks through Device Hub on that same regular iPhone simulator
+covered city search, saving a meaningful visit with a note, navigation after
+saving, Passport metrics, country map shading, and photo selection/review/import.
+The final photo-import retest resolved an Apple simulator sample to San Francisco,
+United States, and correctly added one city and one country. No physical-phone
+validation was performed. iOS 27.0 was the latest installed runtime supporting
+the regular iPhone; the available iOS 27.1 runtime supported only iPhone Duo.
+The 30-city fixture and other MVP limitations below still apply.
 
 ## Bundled resource generation
 

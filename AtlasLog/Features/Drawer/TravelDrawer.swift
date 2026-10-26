@@ -63,11 +63,12 @@ struct TravelDrawer: View {
     }
 
     private var drawerHeader: some View {
-        HStack {
+        let statistics = summary
+        return HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(selectedPage.rawValue).font(.headline)
                 Text(
-                    "\(summary.countriesVisited) countries • \(summary.citiesVisited) cities"
+                    "\(statistics.countriesVisited) \(statistics.countriesVisited == 1 ? "country" : "countries") • \(statistics.citiesVisited) \(statistics.citiesVisited == 1 ? "city" : "cities")"
                 )
                 .font(.caption).foregroundStyle(.secondary)
             }

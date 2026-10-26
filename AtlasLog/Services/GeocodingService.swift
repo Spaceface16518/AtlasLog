@@ -5,6 +5,8 @@ import MapKit
 struct ReverseGeocodedPlace: Sendable {
     let name: String
     let subtitle: String?
+    let countryCode: String?
+    let countryName: String?
 }
 
 protocol Geocoding: Sendable {
@@ -19,7 +21,10 @@ actor MapKitGeocodingService: Geocoding {
         }
         let items = try await request.mapItems
         guard let item = items.first else { return nil }
-        return ReverseGeocodedPlace(name: item.name ?? item.address?.shortAddress ?? "Photo location",
-                                   subtitle: item.address?.shortAddress)
+        let address = item.addressRepresentations
+        return ReverseGeocodedPlace(name: address?.cityName ?? item.name ?? item.address?.shortAddress ?? "Photo location",
+                                   subtitle: item.address?.shortAddress,
+                                   countryCode: address?.region?.identifier,
+                                   countryName: address?.regionName)
     }
 }

@@ -129,7 +129,8 @@ actor PhotoImportProcessor {
             } else {
                 let resolved = try? await geocoder.reverse(photo.coordinate)
                 grouped[key] = PhotoImportCandidate(id: key, canonicalKey: key, proposedName: resolved?.name ?? "Photo location",
-                    proposedCountry: nil, countryCode: nil, coordinate: photo.coordinate, photoCount: 1,
+                    proposedCountry: resolved?.countryName, countryCode: resolved?.countryCode,
+                    coordinate: photo.coordinate, photoCount: 1,
                     earliestDate: photo.creationDate, latestDate: photo.creationDate,
                     confidence: resolved == nil ? .needsReview : .medium,
                     matchingMethod: resolved == nil ? .coordinate : .appleMaps,

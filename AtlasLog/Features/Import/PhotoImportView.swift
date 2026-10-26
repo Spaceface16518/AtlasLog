@@ -49,14 +49,14 @@ struct PhotoImportView: View {
                 Label("Select photos", systemImage: "plus")
             }
             .buttonStyle(.borderedProminent)
-            if skipped > 0 { Text("\(skipped) selected photos had no location.").font(.footnote) }
+            if skipped > 0 { Text("\(skipped) selected \(skipped == 1 ? "photo" : "photos") had no location.").font(.footnote) }
         }
     }
 
     private var processingView: some View {
         VStack(spacing: 18) {
             ProgressView().controlSize(.large)
-            Text("Processing \(selections.count) selected photos…").font(.headline)
+            Text("Processing \(selections.count) selected \(selections.count == 1 ? "photo" : "photos")…").font(.headline)
             Text("Location extraction is limited to four images at a time.").font(.footnote).foregroundStyle(.secondary)
             Button("Cancel", role: .cancel, action: cancel)
         }
@@ -66,7 +66,7 @@ struct PhotoImportView: View {
     private var reviewView: some View {
         List {
             Section {
-                Text("Review every proposed city before saving. Core travel-region matches are suggested; no photo is retained.")
+                Text("Review every proposed place before saving. Core travel-region matches are suggested; no photo is retained.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Proposed places") {
@@ -136,7 +136,7 @@ struct PhotoImportView: View {
                 try context.save()
                 importedVisits += 1
             }
-            resultMessage = "Imported \(importedVisits) visits. \(skipped) photos had no location, \(duplicateCount) were duplicates, and \(failed) failed."
+            resultMessage = "Imported \(importedVisits) \(importedVisits == 1 ? "visit" : "visits"). Photos without location: \(skipped). Duplicates: \(duplicateCount). Failed: \(failed)."
         } catch {
             AppLogger.photoImport.error("Save failed: \(error.localizedDescription, privacy: .public)")
             errorMessage = "Some places may have been imported, but the batch could not be completed."
@@ -164,7 +164,7 @@ struct ImportCandidateRow: View {
             Toggle(isOn: $candidate.include) {
                 VStack(alignment: .leading, spacing: 2) {
                     TextField("Place name", text: $candidate.proposedName).font(.headline)
-                    Text([candidate.proposedCountry, "\(candidate.photoCount) photos"].compactMap { $0 }.joined(separator: " • "))
+                    Text([candidate.proposedCountry, "\(candidate.photoCount) \(candidate.photoCount == 1 ? "photo" : "photos")"].compactMap { $0 }.joined(separator: " • "))
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }

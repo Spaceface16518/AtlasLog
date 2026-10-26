@@ -1,5 +1,6 @@
 import Foundation
 import PhotosUI
+import SwiftData
 import SwiftUI
 import Testing
 @testable import AtlasLog
@@ -10,6 +11,13 @@ private actor NoopMetadataExtractor: PhotoMetadataExtracting {
 
 private actor NoopGeocoder: Geocoding {
     func reverse(_ coordinate: CoordinateValue) async throws -> ReverseGeocodedPlace? { nil }
+}
+
+private actor CountryGeocoder: Geocoding {
+    func reverse(_ coordinate: CoordinateValue) async throws -> ReverseGeocodedPlace? {
+        ReverseGeocodedPlace(name: "San Francisco", subtitle: "San Francisco, CA",
+                            countryCode: "US", countryName: "United States")
+    }
 }
 
 struct PhotoImportTests {
@@ -59,5 +67,32 @@ struct PhotoImportTests {
         #expect(candidates.count == 1)
         #expect(candidates.first?.photoCount == 2)
         #expect(Set(candidates.first?.suggestedRegionIDs ?? []) == ["travel:west", "travel:east"])
+    }
+
+    @Test @MainActor func geocodedPhotoPreservesCountryForPassport() async throws {
+        let processor = PhotoImportProcessor(metadataService: NoopMetadataExtractor(),
+            cityCatalog: CityCatalog(cities: []), regionCatalog: RegionCatalog(), geocoder: CountryGeocoder())
+        let photo = ExtractedPhotoMetadata(assetIdentifier: "san-francisco",
+            coordinate: .init(longitude: -122.48, latitude: 37.77), creationDate: .now)
+        let candidate = try #require(try await processor.buildCandidates(from: [photo]).first)
+        #expect(candidate.proposedName == "San Francisco")
+        #expect(candidate.countryCode == "US")
+        #expect(candidate.proposedCountry == "United States")
+        #expect(candidate.matchingMethod == .appleMaps)
+
+        let container = try makeTestContainer()
+        let context = container.mainContext
+        var status = StatusDraft()
+        status.setMeaningful(true)
+        let place = try TravelRecordService(context: context).addVisit(
+            canonicalKey: candidate.canonicalKey, name: candidate.proposedName,
+            coordinate: candidate.coordinate, countryCode: candidate.countryCode,
+            countryName: candidate.proposedCountry, source: .photoImport,
+            status: status, startDate: .now)
+        let areas = try context.fetch(FetchDescriptor<AreaStatus>())
+        let statistics = PassportStatisticsService().calculate(places: [place], areas: areas)
+        #expect(statistics.countriesVisited == 1)
+        #expect(statistics.meaningfulCountries == 1)
+        #expect(areas.contains { $0.areaID == "country:US" && $0.isVisited })
     }
 }

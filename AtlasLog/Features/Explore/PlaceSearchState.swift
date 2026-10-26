@@ -58,8 +58,8 @@ struct PlaceSeed: Identifiable {
         name = mapItem.name ?? "Saved place"
         subtitle = mapItem.address?.shortAddress
         coordinate = .init(longitude: mapItem.location.coordinate.longitude, latitude: mapItem.location.coordinate.latitude)
-        countryCode = nil
-        countryName = nil
+        countryCode = mapItem.addressRepresentations?.region?.identifier
+        countryName = mapItem.addressRepresentations?.regionName
         administrativeArea = nil
         source = .appleMaps
     }
@@ -86,11 +86,14 @@ final class PlaceSearchState: NSObject, MKLocalSearchCompleterDelegate {
     }
 
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         appleSuggestions = completer.results.prefix(8).map(AppleMapsSuggestion.init)
         isSearching = false
+        message = nil
     }
 
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: any Error) {
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         appleSuggestions = []
         isSearching = false
         message = "Apple Maps search is unavailable. Bundled city search still works offline."
@@ -107,12 +110,14 @@ final class PlaceSearchState: NSObject, MKLocalSearchCompleterDelegate {
 
     private func queryChanged() {
         localTask?.cancel()
+        message = nil
         let current = query.trimmingCharacters(in: .whitespacesAndNewlines)
         if current.isEmpty {
+            isSearching = false
             localResults = []
             appleSuggestions = []
             completer.queryFragment = ""
-            message = nil
+            completer.cancel()
             return
         }
         isSearching = true
