@@ -111,12 +111,13 @@ actor PhotoImportProcessor {
             let match = try await cityCatalog.nearest(to: photo.coordinate)
             let key = match?.city.canonicalKey ?? TravelRecordService.customCanonicalKey(name: "Photo location", countryCode: nil, coordinate: photo.coordinate)
             let regionIDs = membershipService.matches(point: photo.coordinate, geometries: geometries)
-                .filter { $0.membership == .core }.map(\.regionID)
+                .filter { $0.membership == .core && $0.regionID.hasPrefix("travel:") }.map(\.regionID)
             if var candidate = grouped[key] {
                 candidate.photoCount += 1
                 candidate.assetIdentifiers.append(contentsOf: photo.assetIdentifier.map { [$0] } ?? [])
                 candidate.earliestDate = [candidate.earliestDate, photo.creationDate].compactMap { $0 }.min()
                 candidate.latestDate = [candidate.latestDate, photo.creationDate].compactMap { $0 }.max()
+                candidate.suggestedRegionIDs = Array(Set(candidate.suggestedRegionIDs + regionIDs)).sorted()
                 grouped[key] = candidate
             } else if let match {
                 grouped[key] = PhotoImportCandidate(id: key, canonicalKey: key, proposedName: match.city.name,

@@ -1,9 +1,47 @@
 import Foundation
+import OSLog
 import SwiftData
 
 @MainActor
 struct TravelRecordService {
     let context: ModelContext
+    private let aggregateGeometries: [RegionGeometry]
+    private let regionNodes: [RegionNode]
+
+    init(
+        context: ModelContext,
+        aggregateGeometries: [RegionGeometry]? = nil,
+        regionNodes: [RegionNode]? = nil
+    ) {
+        self.context = context
+        self.aggregateGeometries =
+            aggregateGeometries ?? Self.bundledAggregateGeometries
+        self.regionNodes = regionNodes ?? Self.bundledRegionNodes
+    }
+
+    private static let bundledAggregateGeometries: [RegionGeometry] = {
+        do {
+            return try RegionCatalog.loadGeometries(
+                named: ["composed_regions"]
+            )
+        } catch {
+            AppLogger.catalog.error(
+                "Aggregate region load failed: \(error.localizedDescription, privacy: .public)"
+            )
+            return []
+        }
+    }()
+
+    private static let bundledRegionNodes: [RegionNode] = {
+        do {
+            return try RegionCatalog.loadHierarchyNodes()
+        } catch {
+            AppLogger.catalog.error(
+                "Region hierarchy load failed: \(error.localizedDescription, privacy: .public)"
+            )
+            return []
+        }
+    }()
 
     func apply(_ draft: StatusDraft, to place: PlaceRecord, now: Date = .now) throws {
         var normalized = draft
@@ -30,6 +68,7 @@ struct TravelRecordService {
         administrativeArea: String? = nil, source: VisitSource, status: StatusDraft,
         startDate: Date, endDate: Date? = nil
     ) throws -> PlaceRecord {
+        guard endDate == nil || endDate! >= startDate else { throw VisitValidationError.endBeforeStart }
         let place = try upsertPlace(canonicalKey: canonicalKey, name: name, kind: kind,
                                     coordinate: coordinate, countryCode: countryCode,
                                     countryName: countryName, administrativeArea: administrativeArea,
@@ -113,6 +152,7 @@ struct TravelRecordService {
         area.isManualOverride = true
         area.sourceRawValue = VisitSource.manual.rawValue
         area.updatedAt = .now
+        try recalculateDerivedAreas()
         try context.save()
     }
 
@@ -120,43 +160,65 @@ struct TravelRecordService {
         let places = try context.fetch(FetchDescriptor<PlaceRecord>())
         let areas = try context.fetch(FetchDescriptor<AreaStatus>())
         var existing = Dictionary(uniqueKeysWithValues: areas.map { ($0.areaID, $0) })
-        let visited = places.filter(\.isVisited)
+        let visited = places.filter { !$0.visits.isEmpty }
         let countryGroups = Dictionary(grouping: visited.compactMap { place -> (String, PlaceRecord)? in
             guard let code = place.countryCode?.uppercased() else { return nil }
             return (code, place)
         }, by: \.0)
 
         var derivedIDs = Set<String>()
-        var continentChildren: [String: [PlaceRecord]] = [:]
         for (code, pairs) in countryGroups {
             let id = "country:\(code)"
             derivedIDs.insert(id)
             let area = existing[id] ?? AreaStatus(areaID: id, level: .country)
             if area.modelContext == nil { context.insert(area); existing[id] = area }
             guard !area.isManualOverride else { continue }
-            let children = pairs.map(\.1)
-            area.isVisited = true
-            area.isMeaningfulVisit = children.contains(where: \.isMeaningfulVisit)
-            area.isWantToReturn = children.contains(where: \.isWantToReturn)
-            area.isWantToVisit = false
-            area.updatedAt = .now
+            update(area, from: pairs.map(\.1))
+        }
 
-            if let continent = Self.continentID(for: code) {
-                derivedIDs.insert(continent)
-                continentChildren[continent, default: []].append(contentsOf: children)
+        var aggregateRollups: [String: AreaRollup] = [:]
+        for place in visited {
+            let matches = RegionMembershipService().matches(
+                point: .init(
+                    longitude: place.longitude,
+                    latitude: place.latitude
+                ),
+                geometries: aggregateGeometries
+            )
+            .filter { $0.membership == .core }
+            for match in matches {
+                aggregateRollups[match.regionID, default: .init()].merge(place)
             }
         }
-        for (continentID, children) in continentChildren {
-            let parent = existing[continentID] ?? AreaStatus(areaID: continentID, level: .continent)
-            if parent.modelContext == nil { context.insert(parent); existing[continentID] = parent }
-            if !parent.isManualOverride {
-                parent.isVisited = true
-                parent.isMeaningfulVisit = children.contains(where: \.isMeaningfulVisit)
-                parent.isWantToReturn = children.contains(where: \.isWantToReturn)
-                parent.isWantToVisit = false
-                parent.updatedAt = .now
+
+        let nodesByID = Dictionary(
+            uniqueKeysWithValues: regionNodes.map { ($0.id, $0) }
+        )
+        for area in areas where area.isManualOverride && area.isVisited {
+            var parentID = nodesByID[area.areaID]?.parentID
+            var visitedParentIDs = Set<String>()
+            while let currentID = parentID,
+                visitedParentIDs.insert(currentID).inserted
+            {
+                aggregateRollups[currentID, default: .init()].merge(area)
+                parentID = nodesByID[currentID]?.parentID
             }
         }
+
+        for (regionID, rollup) in aggregateRollups {
+            guard let level = aggregateLevel(for: regionID) else { continue }
+            derivedIDs.insert(regionID)
+            let area =
+                existing[regionID]
+                ?? AreaStatus(areaID: regionID, level: level)
+            if area.modelContext == nil {
+                context.insert(area)
+                existing[regionID] = area
+            }
+            guard !area.isManualOverride else { continue }
+            update(area, from: rollup)
+        }
+
         for area in areas where !area.isManualOverride && !derivedIDs.contains(area.areaID) && area.level != .travelRegion {
             area.isVisited = false
             area.isMeaningfulVisit = false
@@ -169,19 +231,41 @@ struct TravelRecordService {
         return "custom:\(countryCode?.lowercased() ?? "xx"):\(normalized):\(String(format: "%.4f", coordinate.latitude)):\(String(format: "%.4f", coordinate.longitude))"
     }
 
-    static func continentID(for countryCode: String) -> String? {
-        let southAmerica = ["AR", "BO", "BR", "CL", "CO", "EC", "GY", "PE", "PY", "SR", "UY", "VE"]
-        let northAmerica = ["CA", "US", "MX"]
-        let europe = ["BE", "DK", "EE", "ES", "FI", "FR", "GB", "IS", "LT", "LU", "LV", "NL", "NO", "PT", "RS", "SE"]
-        let asia = ["CN", "IN", "JP", "RU"]
-        let africa = ["EG", "ZA"]
-        if southAmerica.contains(countryCode) { return "continent:south-america" }
-        if northAmerica.contains(countryCode) { return "continent:north-america" }
-        if europe.contains(countryCode) { return "continent:europe" }
-        if asia.contains(countryCode) { return "continent:asia" }
-        if africa.contains(countryCode) { return "continent:africa" }
-        if countryCode == "AU" { return "continent:oceania" }
+    private func aggregateLevel(for regionID: String) -> RegionLevel? {
+        if regionID.hasPrefix("subcontinent:") { return .subcontinent }
+        if regionID.hasPrefix("continent:") { return .continent }
         return nil
+    }
+
+    private func update(_ area: AreaStatus, from places: [PlaceRecord]) {
+        area.isVisited = true
+        area.isMeaningfulVisit = places.contains(where: \.isMeaningfulVisit)
+        area.isWantToReturn = places.contains(where: \.isWantToReturn)
+        area.isWantToVisit = false
+        area.updatedAt = .now
+    }
+
+    private func update(_ area: AreaStatus, from rollup: AreaRollup) {
+        area.isVisited = true
+        area.isMeaningfulVisit = rollup.isMeaningfulVisit
+        area.isWantToReturn = rollup.isWantToReturn
+        area.isWantToVisit = false
+        area.updatedAt = .now
+    }
+}
+
+private struct AreaRollup {
+    var isMeaningfulVisit = false
+    var isWantToReturn = false
+
+    mutating func merge(_ place: PlaceRecord) {
+        isMeaningfulVisit = isMeaningfulVisit || place.isMeaningfulVisit
+        isWantToReturn = isWantToReturn || place.isWantToReturn
+    }
+
+    mutating func merge(_ area: AreaStatus) {
+        isMeaningfulVisit = isMeaningfulVisit || area.isMeaningfulVisit
+        isWantToReturn = isWantToReturn || area.isWantToReturn
     }
 }
 

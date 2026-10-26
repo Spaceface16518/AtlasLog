@@ -44,7 +44,11 @@ struct PlaceEditorView: View {
                     if !validCoordinate { Label("Enter a valid latitude and longitude.", systemImage: "exclamationmark.triangle").foregroundStyle(.orange) }
                 }
                 Section("Travel status") {
-                    if place == nil || place?.visits.isEmpty == false {
+                    if place == nil {
+                        Toggle("Visited", isOn: .init(get: { status.isVisited }, set: { status.setVisited($0) }))
+                            .accessibilityIdentifier("visited-toggle")
+                    }
+                    if status.isVisited {
                         Toggle("This was a meaningful visit", isOn: meaningfulBinding)
                             .accessibilityIdentifier("meaningful-toggle")
                         Text("Meaningful visits exclude airport-only, pass-through, or childhood visits you do not want counted in main totals.")
@@ -52,6 +56,7 @@ struct PlaceEditorView: View {
                         Toggle("Want to return", isOn: returnBinding)
                     } else {
                         Toggle("Want to visit", isOn: wishlistBinding)
+                            .accessibilityIdentifier("wishlist-toggle")
                     }
                 }
                 if let place {
@@ -67,7 +72,7 @@ struct PlaceEditorView: View {
                         }
                         Button("Add another visit", systemImage: "plus") { showAddVisit = true }
                     }
-                } else {
+                } else if status.isVisited {
                     Section("Visit") {
                         DatePicker("Start", selection: $visitStart, displayedComponents: .date)
                         Toggle("Add end date", isOn: $includeVisitEnd)
@@ -79,6 +84,7 @@ struct PlaceEditorView: View {
                 Section("Notes") {
                     TextField("Optional private notes", text: $notes, axis: .vertical)
                         .lineLimit(3...8)
+                        .accessibilityIdentifier("place-notes")
                 }
                 if place != nil {
                     Section {
@@ -138,12 +144,23 @@ struct PlaceEditorView: View {
                 saved = place
             } else {
                 let key = seed?.canonicalKey ?? TravelRecordService.customCanonicalKey(name: name, countryCode: countryCode.nilIfEmpty, coordinate: coordinate)
-                saved = try service.addVisit(canonicalKey: key, name: name, kind: kind, coordinate: coordinate,
+                if status.isVisited {
+                    saved = try service.addVisit(canonicalKey: key, name: name, kind: kind, coordinate: coordinate,
                                              countryCode: countryCode.nilIfEmpty, countryName: countryName.nilIfEmpty,
                                              administrativeArea: seed?.administrativeArea, source: seed?.source ?? .manual,
                                              status: status, startDate: visitStart,
                                              endDate: includeVisitEnd ? visitEnd : nil)
+                } else {
+                    saved = try service.upsertPlace(canonicalKey: key, name: name, kind: kind, coordinate: coordinate,
+                                                   countryCode: countryCode.nilIfEmpty, countryName: countryName.nilIfEmpty,
+                                                   administrativeArea: seed?.administrativeArea, source: seed?.source ?? .manual,
+                                                   status: status)
+                }
             }
+            if place != nil || notes.nilIfEmpty != nil {
+                saved.notes = notes.nilIfEmpty
+            }
+            try context.save()
             onSaved?(saved)
             dismiss()
         } catch {

@@ -92,6 +92,9 @@ struct PassportMetricCard: View {
         .padding(12)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 15))
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(value.formatted())
+        .accessibilityIdentifier("passport-\(title.lowercased())")
     }
 }
 

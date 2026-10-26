@@ -5,10 +5,12 @@ struct PlaceSearchView: View {
     @Bindable var state: PlaceSearchState
     var onSelect: (PlaceSeed) -> Void
     @State private var resolvingID: UUID?
+    @FocusState private var searchIsFocused: Bool
 
     var body: some View {
         VStack(spacing: 12) {
             TextField("Search for a city to visit", text: $state.query)
+                .focused($searchIsFocused)
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.words)
                 .submitLabel(.search)
@@ -16,7 +18,10 @@ struct PlaceSearchView: View {
             if !state.localResults.isEmpty {
                 resultSection("Bundled cities", systemImage: "building.2") {
                     ForEach(state.localResults) { city in
-                        Button { onSelect(PlaceSeed(city: city)) } label: {
+                        Button {
+                            searchIsFocused = false
+                            onSelect(PlaceSeed(city: city))
+                        } label: {
                             PlaceRow(title: city.name, subtitle: city.countryName, symbol: "building.2")
                         }.buttonStyle(.plain)
                     }
@@ -47,6 +52,7 @@ struct PlaceSearchView: View {
     }
 
     private func resolve(_ suggestion: AppleMapsSuggestion) {
+        searchIsFocused = false
         resolvingID = suggestion.id
         Task {
             defer { resolvingID = nil }

@@ -16,20 +16,20 @@ The product name is centralized in `AppIdentity`; stored data and domain APIs do
 - Complete Natural Earth Admin 0 country geometry at 1:110m, country-composed
   UN M49 continent/subcontinent geometry, and representative travel-region
   geometry.
-- Derived country/continent roll-ups with manual overrides.
+- Derived country/subcontinent/continent roll-ups with manual overrides and hierarchy roll-ups from manually visited travel regions.
 - Passport metrics and hierarchical travel lists.
 - Local SwiftData persistence, debug-only sample journey, privacy controls, acknowledgements, and delete-all.
 - Swift Testing domain tests and a small XCTest UI flow.
 
 ## Architecture
 
-The app uses a lightweight feature-oriented layout under `AtlasLog/Features`. SwiftData V1 models contain user data only. Bundled catalogs remain `Codable` values cached in actors. `TravelRecordService` owns status invariants, place upserts, and area roll-ups; `PassportStatisticsService` owns summary aggregation. MapKit/Photos boundaries are small injected services. Photo work is coordinated by `PhotoImportProcessor`, with at most four representations processed concurrently and serialized reverse-geocoding fallback.
+The app uses a lightweight feature-oriented layout under `AtlasLog/Features`. SwiftData V2 models contain user data only, with separate dated visits per place and a migration from V1 travel history. Bundled catalogs remain `Codable` values cached in actors. `TravelRecordService` owns status invariants, place upserts, and area roll-ups; `PassportStatisticsService` owns summary aggregation. Derived areas are refreshed when the app opens so existing visits receive current region totals. MapKit/Photos boundaries are small injected services. Photo work is coordinated by `PhotoImportProcessor`, with at most four representations processed concurrently and serialized reverse-geocoding fallback.
 
 There are no third-party runtime dependencies, accounts, CloudKit, authentication, or custom map engine.
 
 ## Requirements and build
 
-- macOS with Xcode 26.6 or later stable Xcode 26 release.
+- macOS with Xcode 26.6 or later.
 - iOS 26 simulator or device.
 - Swift 6 with complete strict-concurrency checking.
 
@@ -42,6 +42,16 @@ xcodebuild -project AtlasLog.xcodeproj -scheme AtlasLog \
 ```
 
 The app does not request live-location access at launch.
+
+### Latest validation
+
+On October 26, 2026, Xcode 27.1 passed all 41 tests on a regular iPhone 18 Pro
+simulator running iOS 27.0: 37 Swift Testing tests and four XCTest UI tests.
+Coverage includes V1-to-V2 migration, area roll-ups and deletion, photo matching,
+invalid-date rejection, visit and wishlist persistence, private notes, passport
+totals, map-level navigation, settings, and the photo-import entry screen.
+This is automated simulator evidence; manual review through Device Hub remains
+pending. The 30-city fixture and other MVP limitations below still apply.
 
 ## Bundled resource generation
 

@@ -1,15 +1,18 @@
 import MapKit
+import OSLog
 import SwiftData
 import SwiftUI
-import OSLog
 
 struct TravelMapScreen: View {
     @Environment(\.appDependencies) private var dependencies
     @Query(sort: \PlaceRecord.name) private var places: [PlaceRecord]
     @Query private var areaStatuses: [AreaStatus]
-    @State private var position: MapCameraPosition = .region(.init(
-        center: .init(latitude: 12, longitude: 0), span: .init(latitudeDelta: 145, longitudeDelta: 340)
-    ))
+    @State private var position: MapCameraPosition = .region(
+        .init(
+            center: .init(latitude: 12, longitude: 0),
+            span: .init(latitudeDelta: 145, longitudeDelta: 340)
+        )
+    )
     @State private var mapCenter = CoordinateValue(longitude: 0, latitude: 12)
     @State private var regionNodes: [RegionNode] = []
     @State private var geometries: [RegionGeometry] = []
@@ -29,40 +32,87 @@ struct TravelMapScreen: View {
                 mapLevel
             ) {
                 ForEach(visibleGeometries) { geometry in
-                    ForEach(Array(geometry.polygons.enumerated()), id: \.offset) { _, polygon in
+                    ForEach(Array(geometry.polygons.enumerated()), id: \.offset)
+                    { _, polygon in
                         if let exterior = polygon.first {
-                            MapPolygon(coordinates: exterior.compactMap(clCoordinate))
-                                .foregroundStyle(fill(for: geometry))
-                                .stroke(stroke(for: geometry), style: StrokeStyle(lineWidth: geometry.regionID == selectedRegionID ? 3 : 1.2,
-                                                                                  dash: geometry.boundaryKind == .administrative ? [] : [5, 4]))
+                            MapPolygon(
+                                coordinates: exterior.compactMap(clCoordinate)
+                            )
+                            .foregroundStyle(fill(for: geometry))
+                            .stroke(
+                                stroke(for: geometry),
+                                style: StrokeStyle(
+                                    lineWidth: geometry.regionID
+                                        == selectedRegionID ? 3 : 1.2,
+                                    dash: geometry.boundaryKind
+                                        == .administrative ? [] : [5, 4]
+                                )
+                            )
                         }
                     }
                 }
             }
             if mapLevel == .city {
                 ForEach(places) { place in
-                    Annotation(place.name, coordinate: .init(latitude: place.latitude, longitude: place.longitude), anchor: .center) {
-                        PlaceMarker(place: place, selected: selectedPlaceID == place.id)
-                            .onTapGesture { selectedPlaceID = place.id; editingPlace = place }
+                    Annotation(
+                        place.name,
+                        coordinate: .init(
+                            latitude: place.latitude,
+                            longitude: place.longitude
+                        ),
+                        anchor: .center
+                    ) {
+                        PlaceMarker(
+                            place: place,
+                            selected: selectedPlaceID == place.id
+                        )
+                        .onTapGesture {
+                            selectedPlaceID = place.id
+                            editingPlace = place
+                        }
                     }
                     .tag(place.id)
                 }
             }
-            if let selectedRegion = regionNodes.first(where: { $0.id == selectedRegionID }),
-               let lat = selectedRegion.centroidLatitude, let lon = selectedRegion.centroidLongitude {
-                Annotation(selectedRegion.name, coordinate: .init(latitude: lat, longitude: lon)) {
-                    Label(selectedRegion.name, systemImage: "square.3.layers.3d")
-                        .font(.caption.weight(.semibold)).padding(8).background(.regularMaterial, in: Capsule())
+            if let selectedRegion = regionNodes.first(where: {
+                $0.id == selectedRegionID
+            }),
+                let lat = selectedRegion.centroidLatitude,
+                let lon = selectedRegion.centroidLongitude
+            {
+                Annotation(
+                    selectedRegion.name,
+                    coordinate: .init(latitude: lat, longitude: lon)
+                ) {
+                    Label(
+                        selectedRegion.name,
+                        systemImage: "square.3.layers.3d"
+                    )
+                    .font(.caption.weight(.semibold)).padding(8).background(
+                        .regularMaterial,
+                        in: Capsule()
+                    )
                 }
             }
         }
-        .mapStyle(mapStyle == .standard ? .standard(elevation: .flat) : .imagery(elevation: .realistic))
-        .mapControls { MapCompass(); MapScaleView() }
+        .mapStyle(
+            mapStyle == .standard
+                ? .standard(elevation: .flat) : .imagery(elevation: .realistic)
+        )
+        .mapControls {
+            MapCompass()
+            MapScaleView()
+        }
         .onMapCameraChange(frequency: .onEnd) { context in
-            mapCenter = .init(longitude: context.region.center.longitude, latitude: context.region.center.latitude)
+            mapCenter = .init(
+                longitude: context.region.center.longitude,
+                latitude: context.region.center.latitude
+            )
         }
         .ignoresSafeArea()
-        .overlay(alignment: .top) { mapToolbar.padding(.top, 10).padding(.horizontal) }
+        .overlay(alignment: .top) {
+            mapToolbar.padding(.top, 10).padding(.horizontal)
+        }
         .sheet(isPresented: $showDrawer) {
             TravelDrawer(
                 mapLevel: $mapLevel,
@@ -71,21 +121,35 @@ struct TravelMapScreen: View {
                 showPlaceOnMap: showPlaceOnMap,
                 showRegionOnMap: showRegionOnMap
             )
-                .sheet(isPresented: $showSettings) { SettingsView() }
-                .presentationDetents([.medium, .large], selection: $drawerDetent)
-                .presentationDragIndicator(.visible)
-                .presentationBackground(.regularMaterial)
-                .presentationCornerRadius(24)
-                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .interactiveDismissDisabled()
+            .sheet(isPresented: $showSettings) { SettingsView() }
+            .presentationDetents(
+                [.fraction(1 / 3), .medium, .large],
+                selection: $drawerDetent
+            )
+            .presentationDragIndicator(.hidden)
+            .presentationBackground(.regularMaterial)
+            .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+            .interactiveDismissDisabled()
         }
         .sheet(item: $editingPlace) { PlaceEditorView(place: $0, seed: nil) }
-        .alert("Bundled data unavailable", isPresented: .init(get: { resourceMessage != nil }, set: { if !$0 { resourceMessage = nil } })) {
+        .alert(
+            "Bundled data unavailable",
+            isPresented: .init(
+                get: { resourceMessage != nil },
+                set: { if !$0 { resourceMessage = nil } }
+            )
+        ) {
             Button("OK", role: .cancel) { resourceMessage = nil }
-        } message: { Text(resourceMessage ?? "") }
+        } message: {
+            Text(resourceMessage ?? "")
+        }
         .task { await loadResources() }
         .onAppear {
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing-reset") || ProcessInfo.processInfo.arguments.contains("--ui-testing-expanded") {
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing-reset")
+                || ProcessInfo.processInfo.arguments.contains(
+                    "--ui-testing-expanded"
+                )
+            {
                 drawerDetent = .large
             }
         }
@@ -96,7 +160,9 @@ struct TravelMapScreen: View {
             MapLevelMenu(level: $mapLevel)
             Spacer()
             VStack(spacing: 10) {
-                Button { showSettings = true } label: {
+                Button {
+                    showSettings = true
+                } label: {
                     Image(systemName: "gearshape")
                         .frame(width: 36, height: 36)
                         .background(.regularMaterial, in: Circle())
@@ -107,11 +173,17 @@ struct TravelMapScreen: View {
                 Button {
                     mapStyle = mapStyle == .standard ? .satellite : .standard
                 } label: {
-                    Image(systemName: mapStyle == .standard ? "globe.americas.fill" : "map.fill")
-                        .frame(width: 36, height: 36)
-                        .background(.regularMaterial, in: Circle())
+                    Image(
+                        systemName: mapStyle == .standard
+                            ? "globe.americas.fill" : "map.fill"
+                    )
+                    .frame(width: 36, height: 36)
+                    .background(.regularMaterial, in: Circle())
                 }
-                .accessibilityLabel(mapStyle == .standard ? "Switch to satellite map" : "Switch to standard map")
+                .accessibilityLabel(
+                    mapStyle == .standard
+                        ? "Switch to satellite map" : "Switch to standard map"
+                )
             }
         }
     }
@@ -121,20 +193,20 @@ struct TravelMapScreen: View {
         return .init(latitude: pair[1], longitude: pair[0])
     }
     private func fill(for geometry: RegionGeometry) -> Color {
-        if let status = areaStatuses.first(where: { $0.areaID == geometry.regionID }) {
-            if status.isMeaningfulVisit { return Color.accentColor.opacity(0.30) }
+        if let status = areaStatuses.first(where: {
+            $0.areaID == geometry.regionID
+        }) {
+            if status.isMeaningfulVisit {
+                return Color.accentColor.opacity(0.30)
+            }
             if status.isVisited { return Color.secondary.opacity(0.20) }
-            if status.isWantToVisit { return Color.orange.opacity(0.10) }
         }
-        switch geometry.membership {
-        case .core: return Color.blue.opacity(0.16)
-        case .transition: return Color.blue.opacity(0.07)
-        case .associated: return Color.clear
-        }
+        return Color.clear
     }
     private func stroke(for geometry: RegionGeometry) -> Color {
-        if areaStatuses.first(where: { $0.areaID == geometry.regionID })?.isWantToVisit == true { return .orange }
-        return geometry.regionID == selectedRegionID ? Color.accentColor : Color.blue.opacity(geometry.membership == .core ? 0.7 : 0.35)
+        return geometry.regionID == selectedRegionID
+            ? Color.accentColor
+            : Color.blue.opacity(geometry.membership == .core ? 0.7 : 0.35)
     }
     private var visibleGeometries: [RegionGeometry] {
         let prefix =
@@ -145,8 +217,15 @@ struct TravelMapScreen: View {
             case .continent: "continent:"
             case .city, .macroRegion: ""
             }
+        let visitedRegionIDs = Set(
+            areaStatuses.lazy.filter(\.isVisited).map(\.areaID)
+        )
         return prefix.isEmpty
-            ? [] : geometries.filter { $0.regionID.hasPrefix(prefix) }
+            ? []
+            : geometries.filter {
+                $0.regionID.hasPrefix(prefix)
+                    && visitedRegionIDs.contains($0.regionID)
+            }
     }
 
     private func showPlaceOnMap(_ place: PlaceRecord) {
@@ -155,16 +234,24 @@ struct TravelMapScreen: View {
         focus(on: .init(longitude: place.longitude, latitude: place.latitude))
     }
 
-    private func showRegionOnMap(_ regionID: String, coordinate: CoordinateValue?) {
+    private func showRegionOnMap(
+        _ regionID: String,
+        coordinate: CoordinateValue?
+    ) {
         selectedPlaceID = nil
         selectedRegionID = regionID
         if let coordinate { focus(on: coordinate) }
     }
 
     private func focus(on coordinate: CoordinateValue) {
-        let span: MKCoordinateSpan = mapLevel == .city ? .init(latitudeDelta: 2, longitudeDelta: 2) : .init(latitudeDelta: 16, longitudeDelta: 16)
+        let span: MKCoordinateSpan =
+            mapLevel == .city
+            ? .init(latitudeDelta: 2, longitudeDelta: 2)
+            : .init(latitudeDelta: 16, longitudeDelta: 16)
         withAnimation(.easeInOut(duration: 0.45)) {
-            position = .region(.init(center: coordinate.clCoordinate, span: span))
+            position = .region(
+                .init(center: coordinate.clCoordinate, span: span)
+            )
         }
     }
     private func loadResources() async {
@@ -174,16 +261,19 @@ struct TravelMapScreen: View {
             regionNodes = try await loadedNodes
             geometries = try await loadedGeometry
         } catch {
-            AppLogger.catalog.error("Resource load failed: \(error.localizedDescription, privacy: .public)")
-            resourceMessage = "Some bundled regions could not be loaded. Your saved places remain available."
+            AppLogger.catalog.error(
+                "Resource load failed: \(error.localizedDescription, privacy: .public)"
+            )
+            resourceMessage =
+                "Some bundled regions could not be loaded. Your saved places remain available."
         }
     }
 }
 
 #if DEBUG
-#Preview("Main map") {
-    TravelMapScreen()
-        .environment(\.appDependencies, AppDependencies())
-        .modelContainer(PreviewSupport.container(populated: true))
-}
+    #Preview("Main map") {
+        TravelMapScreen()
+            .environment(\.appDependencies, AppDependencies())
+            .modelContainer(PreviewSupport.container(populated: true))
+    }
 #endif
