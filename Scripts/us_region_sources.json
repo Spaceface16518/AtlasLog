@@ -1,0 +1,22 @@
+{
+  "retrieved": "2026-10-26",
+  "files": [
+    {
+      "url": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_region_5m.zip",
+      "sha256": "74d6bede87bd0e308b903d9b195e3527886a7cdb8241bd2a7207ffbff391f466"
+    },
+    {
+      "url": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_division_5m.zip",
+      "sha256": "15253d7024e7997745768330ea6039ddc6adef4e25495216c08a75f14db5fdbd"
+    },
+    {
+      "url": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_county_500k.zip",
+      "sha256": "aa976c00b181939755d0da757f4c7c2dc0103c3b3b4530fb2a91c2bb62fc777c"
+    },
+    {
+      "url": "https://download.geonames.org/export/dump/cities15000.zip",
+      "sha256": "a3d93a278c3428248db974cf563b6e360c9635ccaf96dfc581ddd27390df05d1"
+    }
+  ],
+  "capital_region_definition": "https://www.ncpc.gov/docs/publications/Resource_Guides_Full_2024.pdf"
+}
