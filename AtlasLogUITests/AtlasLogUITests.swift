@@ -2,6 +2,77 @@ import XCTest
 
 final class AtlasLogUITests: XCTestCase {
     @MainActor
+    func testMapTapsSelectAndRevealRegionsWithoutChangingVisits() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-reset"]
+        app.launch()
+        XCTAssertTrue(app.textFields["place-search"].waitForExistence(timeout: 10))
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+
+        func chooseLayer(_ title: String) {
+            let menu = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Map level,'")).firstMatch
+            XCTAssertTrue(menu.waitForExistence(timeout: 8))
+            menu.tap()
+            app.buttons[title].tap()
+        }
+        func assertSelected(_ id: String) {
+            let row = app.buttons["region-row-\(id)"]
+            let selectedAndVisible = NSPredicate(format: "selected == true AND hittable == true")
+            expectation(for: selectedAndVisible, evaluatedWith: row)
+            waitForExpectations(timeout: 8)
+        }
+        func attachScreenshot(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = name
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+
+        // Interior land/water points in the initial portrait map viewport.
+        // These tap the map itself, without using a list row or selection hook.
+        let europe = app.coordinate(withNormalizedOffset: CGVector(dx: 0.64, dy: 0.28))
+        let africa = app.coordinate(withNormalizedOffset: CGVector(dx: 0.60, dy: 0.43))
+        let france = app.coordinate(withNormalizedOffset: CGVector(dx: 0.50, dy: 0.30))
+        let atlantic = app.coordinate(withNormalizedOffset: CGVector(dx: 0.18, dy: 0.30))
+
+        chooseLayer("Continents")
+        europe.tap()
+        assertSelected("continent:europe")
+        attachScreenshot("Map tap selects Europe and reveals its row")
+        africa.tap()
+        assertSelected("continent:africa")
+        XCTAssertFalse(app.buttons["region-row-continent:europe"].isSelected)
+        atlantic.tap()
+        XCTAssertFalse(app.buttons["region-row-continent:africa"].isSelected)
+
+        chooseLayer("Countries")
+        france.tap()
+        assertSelected("country:FR")
+        let label = app.descendants(matching: .any).matching(identifier: "selected-region-label").firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 5))
+        XCTAssertEqual(label.label, "France")
+        XCTAssertLessThan(abs(label.frame.midX - france.screenPoint.x), 60)
+        XCTAssertLessThan(abs(label.frame.midY - france.screenPoint.y), 60)
+        attachScreenshot("Map tap selects unvisited France and scrolls the country list")
+        app.buttons["Passport"].tap()
+        assertMetric("countries", equals: "0", in: app)
+        france.tap()
+        assertSelected("country:FR")
+        XCTAssertTrue(app.staticTexts["Explore"].exists)
+
+        chooseLayer("Subcontinents")
+        XCTAssertFalse(app.buttons["region-row-country:FR"].exists)
+        africa.tap()
+        assertSelected("subcontinent:northern-africa")
+        chooseLayer("Cities")
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "selected-region-label").firstMatch.exists)
+        europe.tap()
+        XCTAssertTrue(app.staticTexts["No visits yet"].exists)
+    }
+
+    @MainActor
     func testWashingtonVisitUpdatesRegionalPassportAndMap() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-reset"]

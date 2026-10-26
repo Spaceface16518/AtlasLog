@@ -130,6 +130,10 @@ enum SchemaV2: VersionedSchema {
         }
 
         var level: RegionLevel { RegionLevel(rawValue: levelRawValue) ?? .country }
+        var status: StatusDraft {
+            StatusDraft(isVisited: isVisited, isWantToVisit: isWantToVisit,
+                        isMeaningfulVisit: isMeaningfulVisit, isWantToReturn: isWantToReturn)
+        }
     }
 
     @Model

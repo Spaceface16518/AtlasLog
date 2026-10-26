@@ -8,7 +8,9 @@ The product name is centralized in `AppIdentity`; stored data and domain APIs do
 
 - Full-screen SwiftUI `Map` with standard flat and satellite/realistic modes.
 - Cities, countries, travel regions, large regions, subcontinents, and continents as selectable display levels.
+- Tap a bundled region boundary to highlight it and reveal its selected row in Explore, including unvisited regions. Tap empty water to clear the selection.
 - Status treatments for meaningful visits, limited visits, wishlist places, and want-to-return places.
+- The sheet's All, Visited, Meaningful, Want to visit, and Want to return filters apply to cities and every region layer. Counts reflect matching rows; All includes untracked catalog regions. Selecting an excluded region on the map returns the sheet to All so its row can be revealed.
 - Offline bundled major-city search with deterministic exact/prefix/token/population ranking.
 - Apple Maps completion and selected-result resolution when a network is available.
 - Manual city, landmark, and coordinate entry plus editing and deletion.
@@ -46,10 +48,26 @@ The app does not request live-location access at launch.
 
 ### Latest validation
 
-On October 26, 2026, Xcode 27.1 passed **54 tests** on a regular iPhone 18 Pro
-simulator running iOS 27.0 (24A434): 48 Swift Testing tests and six XCTest UI
-tests, with no failures, skips, or reported runtime warnings. The final build
-also succeeded.
+On October 26, 2026, Xcode 27.1 passed **64 distinct tests** across focused and
+regression runs on a regular iPhone 18 Pro simulator running iOS 27.0 (24A434):
+55 Swift Testing tests and nine XCTest UI tests. The two successful runs (one
+focused UI test and the remaining 63 tests) had no failures, skips, or reported
+runtime warnings. The final build also succeeded.
+
+Map-selection coverage directly taps Europe, Africa, France, and Northern Africa,
+asserts that the matching row is selected and visible, clears selection over
+water, returns from Passport by tapping the same region, and checks that travel
+totals remain unchanged. It also verifies that the selected label stays near the
+tap and that switching to Cities clears it. Geometry tests cover overlapping
+U.S. regions, polygon holes, islands, empty water, and active-layer filtering.
+The passing UI test captured [Europe](docs/evidence/map-region-selection/europe-selected.png)
+and [France](docs/evidence/map-region-selection/france-selected.png) screenshots.
+
+Status-filter checks cover all five filters on saved cities and derived countries,
+empty results and Show all on every region layer, manual region-status edits,
+and selecting a region hidden by the current filter. The passing UI test captured
+[Meaningful continents](docs/evidence/status-filters/meaningful-continents.png)
+and [a wishlist region](docs/evidence/status-filters/wishlist-region.png).
 
 Coverage includes V1-to-V2 migration, area roll-ups and deletion, manual overrides,
 photo matching, invalid-date rejection, visit and wishlist persistence, private
@@ -138,8 +156,11 @@ places DC in South Atlantic, not Middle Atlantic. Existing visits refresh at
 launch; deleting the last visit clears derived status. Explicit manual overrides
 remain authoritative, and legacy approximate cultural regions still require
 confirmation. U.S. photo-import regions stay derived rather than becoming
-permanent manual marks. The Large regions layer draws visited boundaries, and
-selecting a region frames its geometry where it does not cross the date line.
+permanent manual marks. All region layers draw their bundled boundaries. Map
+taps select the containing region without changing travel status or moving the
+camera; overlapping regions prefer the one with the smaller bounding footprint.
+Selecting a region from the list still frames its geometry where it does not
+cross the date line.
 
 Download and unpack the official source files into a temporary directory:
 

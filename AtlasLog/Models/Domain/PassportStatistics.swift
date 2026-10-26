@@ -13,10 +13,20 @@ struct PassportStatistics: Equatable, Sendable {
 }
 
 enum StatusFilter: String, CaseIterable, Identifiable {
-    case all = "All tracked"
+    case all = "All"
     case visited = "Visited"
     case meaningful = "Meaningful"
     case wantToVisit = "Want to visit"
     case wantToReturn = "Want to return"
     var id: String { rawValue }
+
+    func matches(_ status: StatusDraft?) -> Bool {
+        switch self {
+        case .all: true
+        case .visited: status?.isVisited == true
+        case .meaningful: status?.isMeaningfulVisit == true
+        case .wantToVisit: status?.isWantToVisit == true
+        case .wantToReturn: status?.isWantToReturn == true
+        }
+    }
 }

@@ -18,6 +18,10 @@ struct TravelMapScreen: View {
     @State private var geometries: [RegionGeometry] = []
     @State private var selectedPlaceID: UUID?
     @State private var selectedRegionID: String?
+    @State private var selectedRegionCoordinate: CoordinateValue?
+    // Repeated taps should reveal the row even when the region has not changed.
+    @State private var regionSelectionRequest = UUID()
+    @State private var selectedDrawerPage = DrawerPage.explore
     @State private var showDrawer = true
     @State private var drawerDetent: PresentationDetent = .medium
     @State private var editingPlace: PlaceRecord?
@@ -27,74 +31,89 @@ struct TravelMapScreen: View {
     @AppStorage("mapLevel") private var mapLevel = RegionLevel.city
 
     var body: some View {
-        Map(position: $position, selection: $selectedPlaceID) {
-            if [.travelRegion, .macroRegion, .country, .subcontinent, .continent].contains(
-                mapLevel
-            ) {
-                ForEach(visibleGeometries) { geometry in
-                    ForEach(Array(geometry.polygons.enumerated()), id: \.offset)
-                    { _, polygon in
-                        if let exterior = polygon.first {
-                            MapPolygon(
-                                coordinates: exterior.compactMap(clCoordinate)
-                            )
-                            .foregroundStyle(fill(for: geometry))
-                            .stroke(
-                                stroke(for: geometry),
-                                style: StrokeStyle(
-                                    lineWidth: geometry.regionID
-                                        == selectedRegionID ? 3 : 1.2,
-                                    dash: geometry.boundaryKind
-                                        == .administrative ? [] : [5, 4]
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-            if mapLevel == .city {
-                ForEach(places) { place in
-                    Annotation(
-                        place.name,
-                        coordinate: .init(
-                            latitude: place.latitude,
-                            longitude: place.longitude
-                        ),
-                        anchor: .center
-                    ) {
-                        PlaceMarker(
-                            place: place,
-                            selected: selectedPlaceID == place.id
-                        )
-                        .onTapGesture {
-                            selectedPlaceID = place.id
-                            editingPlace = place
-                        }
-                    }
-                    .tag(place.id)
-                }
-            }
-            if let selectedRegion = regionNodes.first(where: {
-                $0.id == selectedRegionID && $0.level == mapLevel
-            }),
-                let lat = selectedRegion.centroidLatitude,
-                let lon = selectedRegion.centroidLongitude
-            {
-                Annotation(
-                    selectedRegion.name,
-                    coordinate: .init(latitude: lat, longitude: lon)
+        MapReader { proxy in
+            Map(position: $position, selection: $selectedPlaceID) {
+                if [.travelRegion, .macroRegion, .country, .subcontinent, .continent].contains(
+                    mapLevel
                 ) {
-                    Label(
+                    ForEach(visibleGeometries) { geometry in
+                        ForEach(Array(geometry.polygons.enumerated()), id: \.offset)
+                        { _, polygon in
+                            if let exterior = polygon.first {
+                                let coordinates = exterior.compactMap(clCoordinate)
+                                MapPolygon(MKPolygon(
+                                    coordinates: coordinates,
+                                    count: coordinates.count,
+                                    interiorPolygons: polygon.dropFirst().map { ring in
+                                        let coordinates = ring.compactMap(clCoordinate)
+                                        return MKPolygon(coordinates: coordinates, count: coordinates.count)
+                                    }
+                                ))
+                                .foregroundStyle(fill(for: geometry))
+                                .stroke(
+                                    stroke(for: geometry),
+                                    style: StrokeStyle(
+                                        lineWidth: geometry.regionID
+                                            == selectedRegionID ? 3 : 1.2,
+                                        dash: geometry.boundaryKind
+                                            == .administrative ? [] : [5, 4]
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+                if mapLevel == .city {
+                    ForEach(places) { place in
+                        Annotation(
+                            place.name,
+                            coordinate: .init(
+                                latitude: place.latitude,
+                                longitude: place.longitude
+                            ),
+                            anchor: .center
+                        ) {
+                            PlaceMarker(
+                                place: place,
+                                selected: selectedPlaceID == place.id
+                            )
+                            .onTapGesture {
+                                selectedPlaceID = place.id
+                                editingPlace = place
+                            }
+                        }
+                        .tag(place.id)
+                    }
+                }
+                if let selectedRegion = regionNodes.first(where: {
+                    $0.id == selectedRegionID && $0.level == mapLevel
+                }),
+                    let coordinate = selectedRegionCoordinate ?? selectedRegion.coordinate
+                {
+                    Annotation(
                         selectedRegion.name,
-                        systemImage: "square.3.layers.3d"
-                    )
-                    .font(.caption.weight(.semibold)).padding(8).background(
-                        .regularMaterial,
-                        in: Capsule()
-                    )
-                    .accessibilityIdentifier("selected-region-label")
+                        coordinate: coordinate.clCoordinate
+                    ) {
+                        Label(
+                            selectedRegion.name,
+                            systemImage: "square.3.layers.3d"
+                        )
+                        .font(.caption.weight(.semibold)).padding(8).background(
+                            .regularMaterial,
+                            in: Capsule()
+                        )
+                        .accessibilityIdentifier("selected-region-label")
+                    }
                 }
             }
+            .simultaneousGesture(
+                SpatialTapGesture().onEnded { event in
+                    guard mapLevel != .city,
+                          let coordinate = proxy.convert(event.location, from: .local) else { return }
+                    selectRegion(at: .init(longitude: coordinate.longitude, latitude: coordinate.latitude))
+                },
+                isEnabled: mapLevel != .city
+            )
         }
         .mapStyle(
             mapStyle == .standard
@@ -117,6 +136,7 @@ struct TravelMapScreen: View {
                 $0.id == selectedRegionID && $0.level == level
             }) {
                 selectedRegionID = nil
+                selectedRegionCoordinate = nil
             }
             if level != .city { selectedPlaceID = nil }
         }
@@ -127,6 +147,9 @@ struct TravelMapScreen: View {
         .sheet(isPresented: $showDrawer) {
             TravelDrawer(
                 mapLevel: $mapLevel,
+                selectedPage: $selectedDrawerPage,
+                selectedRegionID: selectedRegionID,
+                regionSelectionRequest: regionSelectionRequest,
                 nodes: regionNodes,
                 mapCenter: mapCenter,
                 showPlaceOnMap: showPlaceOnMap,
@@ -212,7 +235,7 @@ struct TravelMapScreen: View {
             }
             if status.isVisited { return Color.secondary.opacity(0.20) }
         }
-        return Color.clear
+        return geometry.regionID == selectedRegionID ? Color.accentColor.opacity(0.15) : Color.clear
     }
     private func stroke(for geometry: RegionGeometry) -> Color {
         return geometry.regionID == selectedRegionID
@@ -229,20 +252,25 @@ struct TravelMapScreen: View {
             case .continent: "continent:"
             case .city: ""
             }
-        let visitedRegionIDs = Set(
-            areaStatuses.lazy.filter(\.isVisited).map(\.areaID)
-        )
         return prefix.isEmpty
             ? []
-            : geometries.filter {
-                $0.regionID.hasPrefix(prefix)
-                    && visitedRegionIDs.contains($0.regionID)
-            }
+            : geometries.filter { $0.regionID.hasPrefix(prefix) }
+    }
+
+    private func selectRegion(at coordinate: CoordinateValue) {
+        selectedRegionID = RegionMapSelection().regionID(at: coordinate, geometries: visibleGeometries)
+        selectedRegionCoordinate = selectedRegionID == nil ? nil : coordinate
+        guard selectedRegionID != nil else { return }
+        regionSelectionRequest = UUID()
+        selectedPlaceID = nil
+        selectedDrawerPage = .explore
+        drawerDetent = .medium
     }
 
     private func showPlaceOnMap(_ place: PlaceRecord) {
         selectedPlaceID = place.id
         selectedRegionID = nil
+        selectedRegionCoordinate = nil
         focus(on: .init(longitude: place.longitude, latitude: place.latitude))
     }
 
@@ -252,6 +280,8 @@ struct TravelMapScreen: View {
     ) {
         selectedPlaceID = nil
         selectedRegionID = regionID
+        selectedRegionCoordinate = nil
+        regionSelectionRequest = UUID()
         let boxes = geometries.filter { $0.regionID == regionID }.compactMap(\.boundingBox)
         if let west = boxes.map(\.minLongitude).min(), let east = boxes.map(\.maxLongitude).max(),
             let south = boxes.map(\.minLatitude).min(), let north = boxes.map(\.maxLatitude).max(),
