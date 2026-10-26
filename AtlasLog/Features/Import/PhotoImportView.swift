@@ -125,14 +125,7 @@ struct PhotoImportView: View {
                 for identifier in candidate.assetIdentifiers where !importedAssets.contains(where: { $0.assetIdentifier == identifier }) {
                     context.insert(ImportedAssetRecord(assetIdentifier: identifier, matchedPlaceCanonicalKey: candidate.canonicalKey))
                 }
-                for regionID in candidate.suggestedRegionIDs {
-                    let node = RegionNode(id: regionID, name: regionID, level: .travelRegion, parentID: nil,
-                                          centroidLatitude: candidate.coordinate.latitude,
-                                          centroidLongitude: candidate.coordinate.longitude,
-                                          geometryFeatureIDs: [], boundaryKind: .culturalApproximation,
-                                          notes: "Confirmed during photo import")
-                    try service.setManualArea(node, status: status)
-                }
+                try service.confirmPhotoRegions(candidate.suggestedRegionIDs, status: status)
                 try context.save()
                 importedVisits += 1
             }

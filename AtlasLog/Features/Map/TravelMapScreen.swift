@@ -28,7 +28,7 @@ struct TravelMapScreen: View {
 
     var body: some View {
         Map(position: $position, selection: $selectedPlaceID) {
-            if [.travelRegion, .country, .subcontinent, .continent].contains(
+            if [.travelRegion, .macroRegion, .country, .subcontinent, .continent].contains(
                 mapLevel
             ) {
                 ForEach(visibleGeometries) { geometry in
@@ -224,9 +224,10 @@ struct TravelMapScreen: View {
             switch mapLevel {
             case .country: "country:"
             case .travelRegion: "travel:"
+            case .macroRegion: "macro:"
             case .subcontinent: "subcontinent:"
             case .continent: "continent:"
-            case .city, .macroRegion: ""
+            case .city: ""
             }
         let visitedRegionIDs = Set(
             areaStatuses.lazy.filter(\.isVisited).map(\.areaID)
@@ -251,6 +252,21 @@ struct TravelMapScreen: View {
     ) {
         selectedPlaceID = nil
         selectedRegionID = regionID
+        let boxes = geometries.filter { $0.regionID == regionID }.compactMap(\.boundingBox)
+        if let west = boxes.map(\.minLongitude).min(), let east = boxes.map(\.maxLongitude).max(),
+            let south = boxes.map(\.minLatitude).min(), let north = boxes.map(\.maxLatitude).max(),
+            east - west < 180 {
+            // Fit smaller regions such as Washington instead of using the
+            // same 16-degree span as an entire continent.
+            withAnimation(.easeInOut(duration: 0.45)) {
+                position = .region(.init(
+                    center: .init(latitude: (south + north) / 2, longitude: (west + east) / 2),
+                    span: .init(latitudeDelta: min(160, max(0.3, (north - south) * 1.5)),
+                                longitudeDelta: min(340, max(0.3, (east - west) * 1.5)))
+                ))
+            }
+            return
+        }
         if let coordinate { focus(on: coordinate) }
     }
 

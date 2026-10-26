@@ -31,6 +31,7 @@ actor RegionCatalog {
                 "country_boundaries",
                 "travel_regions",
                 "composed_regions",
+                "us_regions",
             ],
             bundle: bundle
         )

@@ -15,8 +15,9 @@ The product name is centralized in `AppIdentity`; stored data and domain APIs do
 - Explicit multi-selection photo import, GPS/PHAsset metadata extraction, bounded processing, nearest-city matching, review, deduplication, and incremental saves.
 - Complete Natural Earth Admin 0 country geometry at 1:110m, country-composed
   UN M49 continent/subcontinent geometry, and representative travel-region
-  geometry.
-- Derived country/subcontinent/continent roll-ups with manual overrides and hierarchy roll-ups from manually visited travel regions.
+  geometry, plus all four U.S. Census regions, all nine Census divisions, and
+  Washington Capital Region.
+- Derived country/U.S. region/subcontinent/continent roll-ups with manual overrides and hierarchy roll-ups from manually visited travel regions.
 - Passport metrics and hierarchical travel lists.
 - Local SwiftData persistence, debug-only sample journey, privacy controls, acknowledgements, and delete-all.
 - Swift Testing domain tests and a small XCTest UI flow.
@@ -45,25 +46,36 @@ The app does not request live-location access at launch.
 
 ### Latest validation
 
-On October 26, 2026, Xcode 27.1 passed the 45-test baseline suite on a regular iPhone 18 Pro
-simulator running iOS 27.0: 41 Swift Testing tests and four XCTest UI tests.
-Coverage includes V1-to-V2 migration, area roll-ups and deletion, photo matching,
-invalid-date rejection, visit and wishlist persistence, private notes, passport
-totals, map-level navigation, settings, and the photo-import entry screen.
-Regression coverage also verifies that geocoded photos retain their country
-for Passport totals and that cleared or retried searches discard stale errors.
-A subsequent targeted UI regression passed for clearing selected-region labels
-across all six map layers. Returning to the original layer keeps the label cleared
-until another region is selected.
+On October 26, 2026, Xcode 27.1 passed **54 tests** on a regular iPhone 18 Pro
+simulator running iOS 27.0 (24A434): 48 Swift Testing tests and six XCTest UI
+tests, with no failures, skips, or reported runtime warnings. The final build
+also succeeded.
 
-Interactive checks through Device Hub on that same regular iPhone simulator
-covered city search, saving a meaningful visit with a note, navigation after
-saving, Passport metrics, country map shading, and photo selection/review/import.
-The final photo-import retest resolved an Apple simulator sample to San Francisco,
-United States, and correctly added one city and one country. No physical-phone
-validation was performed. iOS 27.0 was the latest installed runtime supporting
-the regular iPhone; the available iOS 27.1 runtime supported only iPhone Duo.
-The 30-city fixture and other MVP limitations below still apply.
+Coverage includes V1-to-V2 migration, area roll-ups and deletion, manual overrides,
+photo matching, invalid-date rejection, visit and wishlist persistence, private
+notes, passport totals, settings, and the photo-import entry screen. The new
+coverage checks DC and nearby cities, all nine Census divisions including Alaska
+and Hawaii, the Capital Region's included independent cities and excluded nearby
+cities, hierarchy integrity, refreshing old visits, and removing the last visit.
+A DC photo matches the bundled city without geocoding; its regional statuses
+remain derived and clear when the visit is deleted. UI regressions verify DC's
+two travel-region totals, relaunch persistence, regional map navigation, and
+clearing selected-region labels across all six layers.
+
+The region and city generators reproduce the checked-in output byte for byte.
+All 30 original city records and all previous hierarchy nodes are preserved.
+
+Device Hub checks for this change confirmed bundled Washington search, saving
+a meaningful DC visit, one city/one country/two travel regions, and the new
+U.S. South, U.S. South Atlantic, and Washington Capital Region Passport entries.
+
+Earlier interactive Device Hub checks on the same regular iPhone simulator
+covered meaningful visits with notes, Passport totals, country shading, photo
+selection/review/import (San Francisco), and an Apple Maps Paris result retaining
+France / FR. No physical-phone validation was performed. iOS 27.0 was the latest
+installed runtime supporting the regular iPhone; the available iOS 27.1 runtime
+supported only iPhone Duo. The offline catalog now contains 42 cities, including
+12 in and around DC; the geographic limitations below still apply.
 
 ## Bundled resource generation
 
@@ -108,12 +120,68 @@ the original country resource.
 
 Builds never download resources. Generated JSON and GeoJSON are checked into the app target.
 
+### U.S. and Washington coverage
+
+`us_regions.geojson` adds 14 regions: four Census regions on the **Large regions**
+layer, nine Census divisions on **Travel regions**, and **Washington Capital
+Region** on **Travel regions**. The Census divisions cover all 50 states and DC;
+territories are not part of that classification. The Capital Region uses NCPC's
+definition rather than a rectangular approximation: DC, Montgomery and Prince
+George's counties in Maryland, Arlington/Fairfax/Loudoun/Prince William counties
+in Virginia, and the five enclosed Virginia independent cities. Baltimore,
+Annapolis, Frederick and Richmond are outside this local region.
+
+A DC visit derives Washington Capital Region → U.S. South Atlantic → U.S. South
+→ Northern America → North America, plus United States. Both travel regions
+count in Passport. This nesting follows Census statistical geography, which
+places DC in South Atlantic, not Middle Atlantic. Existing visits refresh at
+launch; deleting the last visit clears derived status. Explicit manual overrides
+remain authoritative, and legacy approximate cultural regions still require
+confirmation. U.S. photo-import regions stay derived rather than becoming
+permanent manual marks. The Large regions layer draws visited boundaries, and
+selecting a region frames its geometry where it does not cross the date line.
+
+Download and unpack the official source files into a temporary directory:
+
+```sh
+mkdir -p /tmp/atlaslog-us-regions
+cd /tmp/atlaslog-us-regions
+curl -fLO https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_region_5m.zip
+curl -fLO https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_division_5m.zip
+curl -fLO https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_county_500k.zip
+curl -fLO https://download.geonames.org/export/dump/cities15000.zip
+for archive in *.zip; do unzip -o "$archive"; done
+```
+
+Then, from the repository root:
+
+```sh
+uv run --with shapely --with pyshp python Scripts/generate_us_region_geojson.py \
+  --regions /tmp/atlaslog-us-regions/cb_2025_us_region_5m.shp \
+  --divisions /tmp/atlaslog-us-regions/cb_2025_us_division_5m.shp \
+  --counties /tmp/atlaslog-us-regions/cb_2025_us_county_500k.shp \
+  --hierarchy AtlasLog/Resources/region_hierarchy.json \
+  --output AtlasLog/Resources/us_regions.geojson
+python3 Scripts/add_capital_cities.py /tmp/atlaslog-us-regions/cities15000.txt \
+  AtlasLog/Resources/major_cities.json
+```
+
+The generator validates source IDs/names and polygon topology, dissolves the
+Capital Region's internal county/city borders, and preserves unrelated hierarchy
+nodes. Census NAD83 longitude/latitude coordinates are retained at cartographic
+precision, not survey precision. Source download SHA-256 values (October 26,
+2026) are recorded in [the source manifest](Scripts/us_region_sources.json).
+GeoNames updates its extract, so future city refreshes may change populations
+and aliases. Neither generator changes stable region or city IDs.
+
 ## Data sources
 
 - GeoNames city schema/data, CC BY 4.0: `geonames.org`.
 - Natural Earth Admin 0 1:110m country geometry, public domain: `naturalearthdata.com`.
 - United Nations Statistics Division M49 geographic regions for country,
   subregion, and region membership: `unstats.un.org`.
+- U.S. Census Bureau 2025 cartographic boundaries and NCPC National Capital
+  Region definition; provenance and exact source links are in the in-app acknowledgements.
 - Apple Maps for map tiles, online suggestions, selected-place resolution, and reverse geocoding.
 
 The in-app acknowledgement screen reads `Resources/DataAttributions.md`.
@@ -127,7 +195,7 @@ A **meaningful visit** is a visited place the person wants included in main tota
 ## Known limitations
 
 - Cultural travel boundaries are interpretive; Cascadia is explicitly an app-defined travel grouping, not an authoritative cultural border.
-- Large-region entries do not yet have geometry and focus via their centroid.
+- The four U.S. large regions have boundaries; the Andes entry still has only a centroid.
 - Natural Earth 1:110m omits the tiny countries of Micronesia and Polynesia, so
   those two M49 subregions will appear only after the country source moves to a
   finer scale.

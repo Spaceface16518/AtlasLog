@@ -22,7 +22,7 @@ struct TravelRecordService {
     private static let bundledAggregateGeometries: [RegionGeometry] = {
         do {
             return try RegionCatalog.loadGeometries(
-                named: ["composed_regions"]
+                named: ["composed_regions", "us_regions"]
             )
         } catch {
             AppLogger.catalog.error(
@@ -156,6 +156,16 @@ struct TravelRecordService {
         try context.save()
     }
 
+    func confirmPhotoRegions(_ regionIDs: [String], status: StatusDraft) throws {
+        let derivedIDs = Set(aggregateGeometries.map(\.regionID))
+        for id in Set(regionIDs) where !derivedIDs.contains(id) {
+            guard let node = regionNodes.first(where: { $0.id == id }) else { continue }
+            // Precise bundled regions already follow the saved visit. Only
+            // interpretive regions need a separate, confirmed manual status.
+            try setManualArea(node, status: status)
+        }
+    }
+
     func recalculateDerivedAreas() throws {
         let places = try context.fetch(FetchDescriptor<PlaceRecord>())
         let areas = try context.fetch(FetchDescriptor<AreaStatus>())
@@ -219,7 +229,9 @@ struct TravelRecordService {
             update(area, from: rollup)
         }
 
-        for area in areas where !area.isManualOverride && !derivedIDs.contains(area.areaID) && area.level != .travelRegion {
+        let spatialRegionIDs = Set(aggregateGeometries.map(\.regionID))
+        for area in areas where !area.isManualOverride && !derivedIDs.contains(area.areaID)
+            && (area.level != .travelRegion || spatialRegionIDs.contains(area.areaID)) {
             area.isVisited = false
             area.isMeaningfulVisit = false
             area.isWantToReturn = false
@@ -232,6 +244,8 @@ struct TravelRecordService {
     }
 
     private func aggregateLevel(for regionID: String) -> RegionLevel? {
+        if regionID.hasPrefix("travel:") { return .travelRegion }
+        if regionID.hasPrefix("macro:") { return .macroRegion }
         if regionID.hasPrefix("subcontinent:") { return .subcontinent }
         if regionID.hasPrefix("continent:") { return .continent }
         return nil

@@ -29,7 +29,7 @@ struct PassportPage: View {
                                            description: Text("Mark a city visited to begin your private travel summary."))
                         .frame(minHeight: 180)
                 } else {
-                    ForEach([RegionLevel.continent, .subcontinent, .travelRegion, .country], id: \.self) { level in
+                    ForEach([RegionLevel.continent, .subcontinent, .macroRegion, .travelRegion, .country], id: \.self) { level in
                         areaSection(level)
                     }
                     placeSection

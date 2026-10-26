@@ -413,5 +413,187 @@
     ],
     "boundaryKind": "culturalApproximation",
     "notes": "App-defined travel grouping, not an authoritative cultural border."
+  },
+  {
+    "id": "macro:us-northeast",
+    "name": "U.S. Northeast",
+    "level": "macroRegion",
+    "parentID": "subcontinent:northern-america",
+    "centroidLatitude": 43.19257,
+    "centroidLongitude": -74.82458,
+    "geometryFeatureIDs": [
+      "macro-us-northeast-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic region."
+  },
+  {
+    "id": "macro:us-midwest",
+    "name": "U.S. Midwest",
+    "level": "macroRegion",
+    "parentID": "subcontinent:northern-america",
+    "centroidLatitude": 42.68998,
+    "centroidLongitude": -95.92375,
+    "geometryFeatureIDs": [
+      "macro-us-midwest-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic region."
+  },
+  {
+    "id": "macro:us-south",
+    "name": "U.S. South",
+    "level": "macroRegion",
+    "parentID": "subcontinent:northern-america",
+    "centroidLatitude": 32.76899,
+    "centroidLongitude": -91.4962,
+    "geometryFeatureIDs": [
+      "macro-us-south-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic region."
+  },
+  {
+    "id": "macro:us-west",
+    "name": "U.S. West",
+    "level": "macroRegion",
+    "parentID": "subcontinent:northern-america",
+    "centroidLatitude": 62.87804,
+    "centroidLongitude": -152.91342,
+    "geometryFeatureIDs": [
+      "macro-us-west-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic region."
+  },
+  {
+    "id": "travel:us-new-england",
+    "name": "U.S. New England",
+    "level": "travelRegion",
+    "parentID": "macro:us-northeast",
+    "centroidLatitude": 44.22232,
+    "centroidLongitude": -71.19932,
+    "geometryFeatureIDs": [
+      "travel-us-new-england-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-middle-atlantic",
+    "name": "U.S. Middle Atlantic",
+    "level": "travelRegion",
+    "parentID": "macro:us-northeast",
+    "centroidLatitude": 41.96734,
+    "centroidLongitude": -77.00582,
+    "geometryFeatureIDs": [
+      "travel-us-middle-atlantic-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-east-north-central",
+    "name": "U.S. East North Central",
+    "level": "travelRegion",
+    "parentID": "macro:us-midwest",
+    "centroidLatitude": 42.22485,
+    "centroidLongitude": -84.75427,
+    "geometryFeatureIDs": [
+      "travel-us-east-north-central-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-west-north-central",
+    "name": "U.S. West North Central",
+    "level": "travelRegion",
+    "parentID": "macro:us-midwest",
+    "centroidLatitude": 42.69001,
+    "centroidLongitude": -97.5057,
+    "geometryFeatureIDs": [
+      "travel-us-west-north-central-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-south-atlantic",
+    "name": "U.S. South Atlantic",
+    "level": "travelRegion",
+    "parentID": "macro:us-south",
+    "centroidLatitude": 32.76899,
+    "centroidLongitude": -82.52763,
+    "geometryFeatureIDs": [
+      "travel-us-south-atlantic-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-east-south-central",
+    "name": "U.S. East South Central",
+    "level": "travelRegion",
+    "parentID": "macro:us-south",
+    "centroidLatitude": 34.65963,
+    "centroidLongitude": -88.01113,
+    "geometryFeatureIDs": [
+      "travel-us-east-south-central-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-west-south-central",
+    "name": "U.S. West South Central",
+    "level": "travelRegion",
+    "parentID": "macro:us-south",
+    "centroidLatitude": 31.42,
+    "centroidLongitude": -98.83734,
+    "geometryFeatureIDs": [
+      "travel-us-west-south-central-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-mountain",
+    "name": "U.S. Mountain",
+    "level": "travelRegion",
+    "parentID": "macro:us-west",
+    "centroidLatitude": 40.19593,
+    "centroidLongitude": -111.02427,
+    "geometryFeatureIDs": [
+      "travel-us-mountain-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:us-pacific",
+    "name": "U.S. Pacific",
+    "level": "travelRegion",
+    "parentID": "macro:us-west",
+    "centroidLatitude": 62.87804,
+    "centroidLongitude": -152.91342,
+    "geometryFeatureIDs": [
+      "travel-us-pacific-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "U.S. Census geographic division."
+  },
+  {
+    "id": "travel:washington-capital",
+    "name": "Washington Capital Region",
+    "level": "travelRegion",
+    "parentID": "travel:us-south-atlantic",
+    "centroidLatitude": 38.92793,
+    "centroidLongitude": -77.17266,
+    "geometryFeatureIDs": [
+      "travel-washington-capital-census-2025"
+    ],
+    "boundaryKind": "geographic",
+    "notes": "Washington, DC and nearby Maryland and Virginia communities, following the National Capital Planning Commission’s definition."
   }
 ]

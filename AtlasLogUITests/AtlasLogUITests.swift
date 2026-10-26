@@ -1,6 +1,42 @@
 import XCTest
 
 final class AtlasLogUITests: XCTestCase {
+    @MainActor
+    func testWashingtonVisitUpdatesRegionalPassportAndMap() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-reset"]
+        app.launch()
+        let search = app.textFields["place-search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 8))
+        search.tap()
+        search.typeText("Washington DC")
+        let washington = app.staticTexts["Washington, DC"].firstMatch
+        XCTAssertTrue(washington.waitForExistence(timeout: 5))
+        washington.tap()
+        XCTAssertTrue(app.navigationBars["Add visit"].waitForExistence(timeout: 5))
+        app.buttons["save-place"].tap()
+        XCTAssertTrue(app.navigationBars["Add visit"].waitForNonExistence(timeout: 5))
+        app.buttons["Passport"].tap()
+        assertMetric("regions", equals: "2", in: app)
+        assertMetric("countries", equals: "1", in: app)
+
+        let capital = app.staticTexts["Washington Capital Region"].firstMatch
+        reveal(capital, in: app)
+        capital.tap()
+        XCTAssertTrue(app.staticTexts["Explore"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Map level, Travel regions"].firstMatch.waitForExistence(timeout: 5))
+
+        app.terminate()
+        app.launchArguments = ["--ui-testing-expanded"]
+        app.launch()
+        app.buttons["Passport"].tap()
+        assertMetric("regions", equals: "2", in: app)
+        let south = app.staticTexts["U.S. South"].firstMatch
+        reveal(south, in: app)
+        south.tap()
+        XCTAssertTrue(app.buttons["Map level, Large regions"].firstMatch.waitForExistence(timeout: 5))
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }

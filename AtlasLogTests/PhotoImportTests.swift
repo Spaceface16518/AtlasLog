@@ -21,6 +21,31 @@ private actor CountryGeocoder: Geocoding {
 }
 
 struct PhotoImportTests {
+    @Test @MainActor func washingtonPhotoUsesBundledCityAndRemovableRegionRollups() async throws {
+        let processor = PhotoImportProcessor(metadataService: NoopMetadataExtractor(), cityCatalog: CityCatalog(),
+            regionCatalog: RegionCatalog(), geocoder: NoopGeocoder())
+        let photo = ExtractedPhotoMetadata(assetIdentifier: "dc", coordinate: .init(longitude: -77.0365, latitude: 38.8977), creationDate: .now)
+        let geometries = try await RegionCatalog().geometries()
+        let candidate = try #require(try await processor.buildCandidates(from: [photo], geometries: geometries).first)
+        #expect(candidate.canonicalKey == "geonames:4140963")
+        #expect(candidate.matchingMethod == .bundledCity)
+        #expect(Set(candidate.suggestedRegionIDs) == ["travel:washington-capital", "travel:us-south-atlantic"])
+        let container = try makeTestContainer()
+        let context = container.mainContext
+        let service = TravelRecordService(context: context)
+        var status = StatusDraft(); status.setMeaningful(true)
+        let place = try service.addVisit(canonicalKey: candidate.canonicalKey, name: candidate.proposedName,
+            coordinate: candidate.coordinate, countryCode: candidate.countryCode, source: .photoImport,
+            status: status, startDate: .now)
+        try service.confirmPhotoRegions(candidate.suggestedRegionIDs, status: status)
+        #expect(try context.fetch(FetchDescriptor<AreaStatus>()).allSatisfy { !$0.isManualOverride })
+        try service.delete(place)
+        #expect(try context.fetch(FetchDescriptor<AreaStatus>()).allSatisfy { !$0.isVisited })
+
+        try service.confirmPhotoRegions(["travel:cascadia"], status: status)
+        #expect(try context.fetch(FetchDescriptor<AreaStatus>()).contains { $0.areaID == "travel:cascadia" && $0.isManualOverride && $0.isVisited })
+    }
+
     private func processor() -> PhotoImportProcessor {
         PhotoImportProcessor(metadataService: NoopMetadataExtractor(),
             cityCatalog: CityCatalog(cities: [city("lima", "Lima", -12.0432, -77.0282)]),
