@@ -75,7 +75,7 @@ struct TravelMapScreen: View {
                 }
             }
             if let selectedRegion = regionNodes.first(where: {
-                $0.id == selectedRegionID
+                $0.id == selectedRegionID && $0.level == mapLevel
             }),
                 let lat = selectedRegion.centroidLatitude,
                 let lon = selectedRegion.centroidLongitude
@@ -92,6 +92,7 @@ struct TravelMapScreen: View {
                         .regularMaterial,
                         in: Capsule()
                     )
+                    .accessibilityIdentifier("selected-region-label")
                 }
             }
         }
@@ -108,6 +109,16 @@ struct TravelMapScreen: View {
                 longitude: context.region.center.longitude,
                 latitude: context.region.center.latitude
             )
+        }
+        .onChange(of: mapLevel) { _, level in
+            // Passport navigation may select a new region in the same update.
+            // Keep that selection only when it belongs to the destination layer.
+            if !regionNodes.contains(where: {
+                $0.id == selectedRegionID && $0.level == level
+            }) {
+                selectedRegionID = nil
+            }
+            if level != .city { selectedPlaceID = nil }
         }
         .ignoresSafeArea()
         .overlay(alignment: .top) {

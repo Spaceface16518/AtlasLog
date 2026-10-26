@@ -49,6 +49,47 @@ final class AtlasLogUITests: XCTestCase {
     }
 
     @MainActor
+    func testRegionLabelClearsWhenChangingLayers() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-reset"]
+        app.launch()
+        XCTAssertTrue(app.textFields["place-search"].waitForExistence(timeout: 8))
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+
+        func chooseLayer(_ title: String) {
+            let menu = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Map level,'")).firstMatch
+            XCTAssertTrue(menu.waitForExistence(timeout: 5))
+            menu.tap()
+            app.buttons[title].tap()
+        }
+        func selectAfrica() {
+            let africa = app.staticTexts["Africa"].firstMatch
+            XCTAssertTrue(africa.waitForExistence(timeout: 5))
+            africa.tap()
+            XCTAssertTrue(app.navigationBars["Africa"].waitForExistence(timeout: 5))
+            app.buttons["Cancel"].tap()
+            XCTAssertTrue(app.navigationBars["Africa"].waitForNonExistence(timeout: 5))
+        }
+
+        let regionLabel = app.descendants(matching: .any).matching(identifier: "selected-region-label").firstMatch
+        chooseLayer("Continents")
+        selectAfrica()
+        XCTAssertTrue(regionLabel.waitForExistence(timeout: 5))
+        XCTAssertEqual(regionLabel.label, "Africa")
+
+        for layer in ["Countries", "Subcontinents", "Travel regions", "Large regions", "Cities", "Continents"] {
+            chooseLayer(layer)
+            XCTAssertTrue(regionLabel.waitForNonExistence(timeout: 5), "Stale region label on \(layer)")
+        }
+
+        selectAfrica()
+        XCTAssertTrue(regionLabel.waitForExistence(timeout: 5))
+        XCTAssertEqual(regionLabel.label, "Africa")
+    }
+
+    @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
         app.launch()

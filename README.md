@@ -45,13 +45,16 @@ The app does not request live-location access at launch.
 
 ### Latest validation
 
-On October 26, 2026, Xcode 27.1 passed all 45 tests on a regular iPhone 18 Pro
+On October 26, 2026, Xcode 27.1 passed the 45-test baseline suite on a regular iPhone 18 Pro
 simulator running iOS 27.0: 41 Swift Testing tests and four XCTest UI tests.
 Coverage includes V1-to-V2 migration, area roll-ups and deletion, photo matching,
 invalid-date rejection, visit and wishlist persistence, private notes, passport
 totals, map-level navigation, settings, and the photo-import entry screen.
 Regression coverage also verifies that geocoded photos retain their country
 for Passport totals and that cleared or retried searches discard stale errors.
+A subsequent targeted UI regression passed for clearing selected-region labels
+across all six map layers. Returning to the original layer keeps the label cleared
+until another region is selected.
 
 Interactive checks through Device Hub on that same regular iPhone simulator
 covered city search, saving a meaningful visit with a note, navigation after
